@@ -12,6 +12,7 @@ def clean_name(name: str):
     new_name = re.sub(artist_name_pattern, "", name)
     new_name = re.sub(tags_pattern, "", new_name)
     new_name = re.sub(koushoku_pattern, "", new_name)
+    new_name = re.sub("’", "'", new_name)
     return new_name.strip()
 
 
