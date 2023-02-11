@@ -38,6 +38,7 @@ for artist in artists:
 
 with (root_path / "index.json").open(mode="w", encoding="utf-8") as f:
     json.dump(obj=index_data, fp=f, indent=2, ensure_ascii=False, sort_keys=True)
+    f.write("\n")
 
 missing_links = sorted(
     (artist, entry)
