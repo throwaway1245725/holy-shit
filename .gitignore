@@ -1,6 +1,2 @@
-*
-!.*
-!*.json
-!*.py
-!*.txt
 .venv
+data

@@ -6,7 +6,7 @@ root_path = Path.cwd()
 
 artists = [
     path
-    for path in root_path.iterdir()
+    for path in (root_path / "data").iterdir()
     if path.is_dir() and not path.name.startswith(".")
 ]
 
@@ -39,12 +39,12 @@ for artist in artists:
 with (root_path / "index.json").open(mode="w", encoding="utf-8") as f:
     json.dump(obj=index_data, fp=f, indent=2, ensure_ascii=False, sort_keys=True)
 
-missing_links = [
+missing_links = sorted(
     (artist, entry)
     for artist, entries in index_data.items()
     for entry, value in entries.items()
     if not value
-]
+)
 if missing_links:
     print(f"missing links: ")
     for artist, entry in missing_links:
