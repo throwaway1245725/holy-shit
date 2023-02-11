@@ -39,11 +39,13 @@ for artist in artists:
 with (root_path / "index.json").open(mode="w", encoding="utf-8") as f:
     json.dump(obj=index_data, fp=f, indent=2, ensure_ascii=False, sort_keys=True)
 
-missing_links = {
-    artist: entry
+missing_links = [
+    (artist, entry)
     for artist, entries in index_data.items()
     for entry, value in entries.items()
     if not value
-}
+]
 if missing_links:
-    print(f"missing links: {missing_links}")
+    print(f"missing links: ")
+    for artist, entry in missing_links:
+        print(f"{artist}/{entry}")
