@@ -11,14 +11,6 @@
       "program": "./refresh_index.py",
       "console": "integratedTerminal",
       "justMyCode": true
-    },
-    {
-      "name": "clean_filenames.py",
-      "type": "python",
-      "request": "launch",
-      "program": "./clean_filenames.py",
-      "console": "integratedTerminal",
-      "justMyCode": true
     }
   ]
 }
