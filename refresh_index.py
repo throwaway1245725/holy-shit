@@ -1,3 +1,4 @@
+import collections
 import json
 import re
 from pathlib import Path
@@ -122,6 +123,25 @@ def refresh_index():
         print(f"missing links: ")
         for artist, entry in missing_links:
             print(f"{artist}/{entry}")
+
+    duplicate_urls = set(
+        item
+        for item, count in collections.Counter(
+            url
+            for _artist, entries in index_data.items()
+            for _entry, url in entries.items()
+        ).items()
+        if count > 1
+    )
+    if duplicate_urls:
+        duplicate_urls_str = "\n".join(
+            f"{artist}/{entry}:{url}"
+            for artist, entries in index_data.items()
+            for entry, url in entries.items()
+            if url in duplicate_urls
+        )
+        print(f"duplicate urls detected: \n{duplicate_urls_str}")
+
     print("finished refreshing index")
 
 
