@@ -1,22 +1,57 @@
 import json
 import re
 from pathlib import Path
-from typing import Dict
+from typing import Dict, List, Set, Tuple
 
 root_path = Path.cwd()
 data_dir = Path.cwd() / "data"
-index_json = root_path / "index.json"
-
-artist_name_pattern = r"^\[[^\]]*\]"
-tags_pattern = r"\{[^\}]*\}$"
-koushoku_pattern = r"\(koushoku\.org\)|\(ksk\.moe\)"
 
 
-def clean_filenames():
-    def clean_name(name: str):
-        new_name = re.sub(artist_name_pattern, "", name)
-        new_name = re.sub(tags_pattern, "", new_name)
-        new_name = re.sub(koushoku_pattern, "", new_name)
+def add_rename_path(
+    source: Path,
+    new_name: str,
+    paths_to_move_source: Dict[Path, Path],
+    conflicts: List[Tuple[Path, Path]],
+):
+    new_path = source.with_name(new_name)
+    if new_path in paths_to_move_source:
+        conflicts.append((paths_to_move_source[new_path], source))
+    paths_to_move_source[new_path] = source
+
+
+def do_move(
+    paths_to_move_source: Dict[Path, Path],
+    conflicts: List[Tuple[Path, Path]],
+    type: str,
+):
+    if paths_to_move_source:
+        if conflicts:
+            conflicts_str = "\n".join(
+                f"{conflict_a}\n{conflict_b}" for conflict_a, conflict_b in conflicts
+            )
+            error_msg = f"duplicate destination paths!\n{conflicts_str}"
+            raise Exception(error_msg)
+        print(f"moving {type}:")
+        for new_path, page in paths_to_move_source.items():
+            print(f"{page.name} =============> {new_path.name}")
+            page.rename(new_path)
+    else:
+        print(f"no {type} to move")
+
+
+def clean_entries():
+    print("cleaning entries")
+    ARTIST_NAME_PATTERN = r"^\[[^\]]*\]"
+    TAGS_PATTERN = r"\{[^\}]*\}$"
+    KOUSHOKU_PATTERN = r"\(koushoku\.org\)|\(ksk\.moe\)"
+
+    entries_to_move_source: Dict[Path, Path] = {}
+    conflicts: List[Tuple[Path, Path]] = []
+
+    def clean_directory_name(name: str):
+        new_name = re.sub(ARTIST_NAME_PATTERN, "", name)
+        new_name = re.sub(TAGS_PATTERN, "", new_name)
+        new_name = re.sub(KOUSHOKU_PATTERN, "", new_name)
         new_name = re.sub("’", "'", new_name)
         new_name = re.sub("？", "", new_name)
         new_name = re.sub("–", "-", new_name)
@@ -24,19 +59,29 @@ def clean_filenames():
 
     for artist in data_dir.iterdir():
         for entry in artist.iterdir():
-            cleaned_name = clean_name(entry.name)
+            cleaned_name = clean_directory_name(entry.name)
             if entry.name != cleaned_name:
-                print(f"{artist.name}/{entry.name} =============> {cleaned_name}")
-                entry.rename(entry.with_name(cleaned_name))
+                add_rename_path(
+                    source=entry,
+                    new_name=cleaned_name,
+                    paths_to_move_source=entries_to_move_source,
+                    conflicts=conflicts,
+                )
+
+    if entries_to_move_source:
+        do_move(entries_to_move_source, conflicts, "entries")
+    else:
+        print("no entries to move")
 
 
 def refresh_index():
+    print("refreshing index")
     artists = [
         path
         for path in data_dir.iterdir()
         if path.is_dir() and not path.name.startswith(".")
     ]
-
+    index_json = root_path / "index.json"
     with index_json.open(mode="r", encoding="utf-8") as f:
         index_data: Dict[str, Dict[str, str]] = json.load(f)
 
@@ -77,7 +122,153 @@ def refresh_index():
         print(f"missing links: ")
         for artist, entry in missing_links:
             print(f"{artist}/{entry}")
+    print("finished refreshing index")
 
 
-clean_filenames()
-refresh_index()
+def clean_filenames():
+    print("cleaning_filenames")
+    IMAGE_SUFFIXES = [".jpg", ".jpeg", ".png"]
+
+    PATTERNS = {
+        "standard": re.compile(
+            r"(?<![^\s])\b(?P<page1>\d+)(?:-(?P<page2>\d+))?(?P<suffix>[a-c])?\b(?![^\s])"
+        ),
+        "fakku": re.compile(
+            r"p(?P<page1>\d+)(?:(?:x(?P<suffix>\d))|(?:-p(?P<page2>\d+)))?"
+        ),
+        "underscores": re.compile(r"_(?P<page1>\d+)_x3200"),
+        "million_zeros": re.compile(r"^[a-zA-Z]+[_-]+(?P<page1>\d+)$"),
+        "irodori": re.compile(r"Page_(?P<page1>\d+)_Image_0001"),
+    }
+
+    matches: Dict[str, Set[Tuple[Path, re.Match]]] = {
+        key: set() for key in PATTERNS.keys()
+    }
+
+    pages_to_move_source: Dict[Path, Path] = {}
+    conflicts: List[Tuple[Path, Path]] = []
+
+    def generate_name(
+        max_int_length: int,
+        file_suffix: str,
+        page1: str,
+        page2: str = None,
+        suffix: str = None,
+    ) -> str:
+        if page2:
+            if suffix:
+                return f"{int(page1):0{max_int_length}}-{int(page2):0{max_int_length}}{suffix}{file_suffix}"
+            else:
+                return f"{int(page1):0{max_int_length}}-{int(page2):0{max_int_length}}{file_suffix}"
+        elif suffix:
+            return f"{int(page1):0{max_int_length}}{suffix}{file_suffix}"
+        else:
+            return f"{int(page1):0{max_int_length}}{file_suffix}"
+
+    def get_max_int_len(entry_matches: Set[Tuple[Path, re.Match]]):
+        return max(
+            2, *(len(m.group("page1").lstrip("0")) for (_page, m) in entry_matches)
+        )
+
+    def clean_standard(
+        entry_matches: Set[Tuple[Path, re.Match]], is_fakku: bool = False
+    ):
+        max_int_length = get_max_int_len(entry_matches)
+
+        for page, m in entry_matches:
+            suffix = m.group("suffix")
+            if suffix and is_fakku:
+                suffix = chr(ord("a") + int(suffix) - 1)
+            new_name = generate_name(
+                max_int_length=max_int_length,
+                file_suffix=page.suffix,
+                page1=m.group("page1"),
+                page2=m.group("page2"),
+                suffix=suffix,
+            )
+            if page.name != new_name:
+                nonlocal pages_to_move_source
+                nonlocal conflicts
+                add_rename_path(
+                    source=page,
+                    new_name=new_name,
+                    paths_to_move_source=pages_to_move_source,
+                    conflicts=conflicts,
+                )
+
+    def clean_fakku(entry_matches: Set[Tuple[Path, re.Match]]):
+        clean_standard(entry_matches, is_fakku=True)
+
+    def clean_simple(entry_matches: Set[Tuple[Path, re.Match]]):
+        max_int_length = get_max_int_len(entry_matches)
+
+        for page, m in entry_matches:
+            new_name = generate_name(
+                max_int_length=max_int_length,
+                file_suffix=page.suffix,
+                page1=m.group("page1"),
+            )
+            if page.name != new_name:
+                add_rename_path(page, new_name)
+
+    CLEANERS = {
+        "standard": clean_standard,
+        "fakku": clean_fakku,
+        "underscores": clean_simple,
+        "million_zeros": clean_simple,
+        "irodori": clean_simple,
+    }
+
+    def process_entry(entry: Path):
+        entry_matches: Set[Tuple[Path, re.Match]] = set()
+        matched_pattern_name: str = None
+
+        def check_match(pattern_name: str, page: Path):
+            nonlocal matches
+            nonlocal entry_matches
+            nonlocal matched_pattern_name
+            if m := list(PATTERNS[pattern_name].finditer(page.stem)):
+                matches[pattern_name].add((page, m[-1]))
+                if not matched_pattern_name:
+                    matched_pattern_name = pattern_name
+                if matched_pattern_name and matched_pattern_name != pattern_name:
+                    raise Exception("what even")
+                entry_matches.add((page, m[-1]))
+
+        pages = [page for page in entry.iterdir() if page.suffix in IMAGE_SUFFIXES]
+        for page in pages:
+            for pattern_name in PATTERNS.keys():
+                check_match(pattern_name, page)
+
+        CLEANERS[matched_pattern_name](entry_matches)
+
+    for artist in data_dir.iterdir():
+        for entry in artist.iterdir():
+            sub_entries = [
+                sub_entry for sub_entry in entry.iterdir() if sub_entry.is_dir()
+            ]
+            if sub_entries:
+                for sub_entry in sub_entries:
+                    process_entry(sub_entry)
+            else:
+                process_entry(entry)
+
+    if intersection := set.intersection(
+        *(set(page for (page, _m) in match_set) for match_set in matches.values())
+    ):
+        raise Exception(f"a page matched multiple patterns: {intersection}")
+
+    if pages_to_move_source:
+        do_move(pages_to_move_source, conflicts, "pages")
+    else:
+        print("no pages to move")
+
+
+def main():
+    clean_entries()
+    refresh_index()
+    clean_filenames()
+
+
+if __name__ == "__main__":
+    main()
