@@ -9,7 +9,7 @@ index_json = root_path / "index.json"
 
 artist_name_pattern = r"^\[[^\]]*\]"
 tags_pattern = r"\{[^\}]*\}$"
-koushoku_pattern = r"\(koushoku\.org\)"
+koushoku_pattern = r"\(koushoku\.org\)|\(ksk\.moe\)"
 
 
 def clean_filenames():
