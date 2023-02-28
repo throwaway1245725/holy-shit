@@ -1,0 +1,3 @@
+black
+bs4
+requests

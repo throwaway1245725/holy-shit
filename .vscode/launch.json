@@ -5,10 +5,42 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "Python: Current File",
+      "type": "python",
+      "request": "launch",
+      "program": "${file}",
+      "console": "integratedTerminal",
+      "justMyCode": true
+    },
+    {
       "name": "refresh_index.py",
       "type": "python",
       "request": "launch",
       "program": "./refresh_index.py",
+      "console": "integratedTerminal",
+      "justMyCode": true
+    },
+    {
+      "name": "fetch_metadata.py",
+      "type": "python",
+      "request": "launch",
+      "program": "./fetch_metadata.py",
+      "console": "integratedTerminal",
+      "justMyCode": true
+    },
+    {
+      "name": "migrate_urls.py",
+      "type": "python",
+      "request": "launch",
+      "program": "./migrate_urls.py",
+      "console": "integratedTerminal",
+      "justMyCode": true
+    },
+    {
+      "name": "random_entry.py",
+      "type": "python",
+      "request": "launch",
+      "program": "./random_entry.py",
       "console": "integratedTerminal",
       "justMyCode": true
     }
