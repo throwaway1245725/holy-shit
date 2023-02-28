@@ -4,7 +4,6 @@ import re
 from pathlib import Path
 from typing import Dict, List, Set, Tuple
 
-root_path = Path.cwd()
 data_dir = Path.cwd() / "data"
 
 
@@ -82,7 +81,7 @@ def refresh_index():
         for path in data_dir.iterdir()
         if path.is_dir() and not path.name.startswith(".")
     ]
-    index_json = root_path / "index.json"
+    index_json = Path.cwd() / "index.json"
     with index_json.open(mode="r", encoding="utf-8") as f:
         index_data: Dict[str, Dict[str, str]] = json.load(f)
 
@@ -130,6 +129,7 @@ def refresh_index():
             url
             for _artist, entries in index_data.items()
             for _entry, url in entries.items()
+            if url
         ).items()
         if count > 1
     )
@@ -159,6 +159,7 @@ def clean_filenames():
         "underscores": re.compile(r"_(?P<page1>\d+)_x3200"),
         "million_zeros": re.compile(r"^[a-zA-Z]+[_-]+(?P<page1>\d+)$"),
         "irodori": re.compile(r"Page_(?P<page1>\d+)_Image_0001"),
+        "wtf_is_that": re.compile(r"_3200x_(?P<page1>\d+)$"),
     }
 
     matches: Dict[str, Set[Tuple[Path, re.Match]]] = {
@@ -229,7 +230,14 @@ def clean_filenames():
                 page1=m.group("page1"),
             )
             if page.name != new_name:
-                add_rename_path(page, new_name)
+                nonlocal pages_to_move_source
+                nonlocal conflicts
+                add_rename_path(
+                    source=page,
+                    new_name=new_name,
+                    paths_to_move_source=pages_to_move_source,
+                    conflicts=conflicts,
+                )
 
     CLEANERS = {
         "standard": clean_standard,
@@ -237,6 +245,7 @@ def clean_filenames():
         "underscores": clean_simple,
         "million_zeros": clean_simple,
         "irodori": clean_simple,
+        "wtf_is_that": clean_simple
     }
 
     def process_entry(entry: Path):
