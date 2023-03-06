@@ -245,7 +245,7 @@ def clean_filenames():
         "underscores": clean_simple,
         "million_zeros": clean_simple,
         "irodori": clean_simple,
-        "wtf_is_that": clean_simple
+        "wtf_is_that": clean_simple,
     }
 
     def process_entry(entry: Path):
@@ -293,9 +293,29 @@ def clean_filenames():
         print("no pages to move")
 
 
+def check_multi_entries():
+    print("checking for new multi-entries")
+    multi_entries_json = Path.cwd() / "multi_entries.json"
+    with multi_entries_json.open("r") as f:
+        confirmed_multi_entries = set(json.load(f))
+    existing_multi_entries = set(
+        str(entry.relative_to(data_dir))
+        for artist in data_dir.iterdir()
+        for entry in artist.iterdir()
+        if any(sub_entry.is_dir() for sub_entry in entry.iterdir())
+    )
+    new_multi_entries = existing_multi_entries - confirmed_multi_entries
+    if new_multi_entries:
+        print("new multi-entries found:")
+        print(json.dumps(sorted(new_multi_entries), indent=2))
+    else:
+        print("no new multi-entries found")
+
+
 def main():
     clean_entries()
     refresh_index()
+    check_multi_entries()
     clean_filenames()
 
 
