@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Dict, List, Set, Tuple
 
 data_dir = Path.cwd() / "data"
+index_json = Path.cwd() / "index.json"
 
 
 def add_rename_path(
@@ -40,7 +41,7 @@ def do_move(
 
 
 def clean_entries():
-    print("cleaning entries")
+    print("========== cleaning entries ==========")
     ARTIST_NAME_PATTERN = r"^\[[^\]]*\]"
     TAGS_PATTERN = r"\{[^\}]*\}$"
     KOUSHOKU_PATTERN = r"\(koushoku\.org\)|\(ksk\.moe\)"
@@ -75,13 +76,12 @@ def clean_entries():
 
 
 def refresh_index():
-    print("refreshing index")
+    print("========== refreshing index ==========")
     artists = [
         path
         for path in data_dir.iterdir()
         if path.is_dir() and not path.name.startswith(".")
     ]
-    index_json = Path.cwd() / "index.json"
     with index_json.open(mode="r", encoding="utf-8") as f:
         index_data: Dict[str, Dict[str, str]] = json.load(f)
 
@@ -119,7 +119,7 @@ def refresh_index():
         if not value
     )
     if missing_links:
-        print(f"missing links: ")
+        print(f"missing links:")
         for artist, entry in missing_links:
             print(f"{artist}/{entry}")
 
@@ -146,7 +146,7 @@ def refresh_index():
 
 
 def clean_filenames():
-    print("cleaning_filenames")
+    print("========== cleaning_filenames ==========")
     IMAGE_SUFFIXES = [".jpg", ".jpeg", ".png"]
 
     PATTERNS = {
@@ -294,7 +294,7 @@ def clean_filenames():
 
 
 def check_multi_entries():
-    print("checking for new multi-entries")
+    print("========== checking for new multi-entries ==========")
     multi_entries_json = Path.cwd() / "multi_entries.json"
     with multi_entries_json.open("r") as f:
         confirmed_multi_entries = set(json.load(f))
@@ -312,11 +312,48 @@ def check_multi_entries():
         print("no new multi-entries found")
 
 
+def check_missing_entries():
+    print("========== checking for missing entries ==========")
+    with index_json.open(mode="r", encoding="utf-8") as f:
+        index_data: Dict[str, Dict[str, str]] = json.load(f)
+    index_entries = set(
+        f"{artist}/{entry}"
+        for artist, entries in index_data.items()
+        for entry, _url in entries.items()
+    )
+    actual_entries = set(
+        f"{artist.name}/{entry.name}"
+        for artist in data_dir.iterdir()
+        for entry in artist.iterdir()
+    )
+    missing_entries = index_entries - actual_entries
+    if missing_entries:
+        print("missing entries detected:")
+        ARTIST_ENTRY_PATTERN = re.compile(r"(?P<artist>.*)\/(?P<entry>.*)")
+
+        def get_entry_url(entry: str) -> str:
+            m = ARTIST_ENTRY_PATTERN.match(entry)
+            if m and "artist" in m.groupdict() and "entry" in m.groupdict():
+                return index_data[m.group("artist")][m.group("entry")]
+            else:
+                raise Exception("what in the??")
+
+        missing_entries_with_url = sorted(
+            f"{missing_entry}: {get_entry_url(missing_entry)}"
+            for missing_entry in missing_entries
+        )
+        for line in missing_entries_with_url:
+            print(line)
+    else:
+        print("no missing entries detected")
+
+
 def main():
     clean_entries()
     refresh_index()
-    check_multi_entries()
     clean_filenames()
+    check_multi_entries()
+    check_missing_entries()
 
 
 if __name__ == "__main__":
