@@ -100,8 +100,11 @@ def refresh_index():
             invalid_entries = data_entries_set - dir_entries_set
             if invalid_entries:
                 for invalid_entry in invalid_entries:
-                    del index_data[artist.name][invalid_entry]
-                    print(f"deleted invalid entry: {artist.name}/{invalid_entry}")
+                    if index_data[artist.name][invalid_entry]:
+                        print(f"entry missing files: {artist.name}/{invalid_entry}")
+                    else:
+                        del index_data[artist.name][invalid_entry]
+                        print(f"deleted invalid entry: {artist.name}/{invalid_entry}")
         else:
             index_data[artist.name] = {entry.name: "" for entry in artist.iterdir()}
             print(
