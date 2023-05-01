@@ -3,7 +3,7 @@ from pathlib import Path
 
 from tinydb import TinyDB
 
-db = TinyDB("db.json")
+db = TinyDB("db.json", indent=2, sort_keys=True)
 data_dir = Path.cwd() / "data"
 
 

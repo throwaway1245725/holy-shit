@@ -116,7 +116,7 @@ def get_missing_metadata():
                     )
                     f.write("\n")
                 try:
-                    db = TinyDB("db.json")
+                    db = TinyDB("db.json", indent=2, ensure_ascii=False, sort_keys=True)
                     db.insert(
                         {
                             **metadata,
