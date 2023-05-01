@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-from tinydb import TinyDB
+from tinydb import Query, TinyDB
 
 db = TinyDB("db.json", indent=2, sort_keys=True)
 data_dir = Path.cwd() / "data"
@@ -14,5 +14,6 @@ def fetch_metadata(json_path: Path) -> dict:
 
 all_metadata_files = list(data_dir.glob("**/metadata.json"))
 if len(db) != len(all_metadata_files):
+    db.drop_tables()
     db.insert_multiple(map(fetch_metadata, all_metadata_files))
 print("oh")

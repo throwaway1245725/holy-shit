@@ -21,6 +21,7 @@ HREF_PATTERN = re.compile(r"\/.+\/(?P<name>.+)")
 
 index_json = Path.cwd() / "index.json"
 data_dir = Path.cwd() / "data"
+db = TinyDB("db.json", indent=2, ensure_ascii=False, sort_keys=True)
 
 
 def get_metadata(url):
@@ -116,7 +117,6 @@ def get_missing_metadata():
                     )
                     f.write("\n")
                 try:
-                    db = TinyDB("db.json", indent=2, ensure_ascii=False, sort_keys=True)
                     db.insert(
                         {
                             **metadata,

@@ -29,6 +29,14 @@
       "justMyCode": true
     },
     {
+      "name": "search_metadata.py",
+      "type": "python",
+      "request": "launch",
+      "program": "./search_metadata.py",
+      "console": "integratedTerminal",
+      "justMyCode": true
+    },
+    {
       "name": "migrate_urls.py",
       "type": "python",
       "request": "launch",
