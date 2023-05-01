@@ -6,6 +6,7 @@ from typing import Dict
 
 import requests
 from bs4 import BeautifulSoup
+from tinydb import TinyDB
 
 PLURAL_MAP = {
     "artist": "artists",
@@ -17,6 +18,9 @@ PLURAL_MAP = {
 }
 PAGES_PATTERN = re.compile(r"\/browse\?ps=(?P<pages>\d+)&adv=")
 HREF_PATTERN = re.compile(r"\/.+\/(?P<name>.+)")
+
+index_json = Path.cwd() / "index.json"
+data_dir = Path.cwd() / "data"
 
 
 def get_metadata(url):
@@ -98,12 +102,11 @@ def get_metadata(url):
 
 def get_missing_metadata():
     print("fetching missing metadata")
-    index_json = Path.cwd() / "index.json"
     with index_json.open(mode="r", encoding="utf-8") as f:
         index_data: Dict[str, Dict[str, str]] = json.load(f)
     for artist, entries in index_data.items():
         for entry, url in entries.items():
-            metadata_json = Path.cwd() / "data" / artist / entry / "metadata.json"
+            metadata_json = data_dir / artist / entry / "metadata.json"
             if not metadata_json.exists():
                 print(f"fetching metadata for {artist}/{entry}")
                 metadata = get_metadata(url)
@@ -112,6 +115,16 @@ def get_missing_metadata():
                         obj=metadata, fp=f, indent=2, ensure_ascii=False, sort_keys=True
                     )
                     f.write("\n")
+                try:
+                    db = TinyDB("db.json")
+                    db.insert(
+                        {
+                            **metadata,
+                            "json_path": metadata_json.relative_to(data_dir).as_posix(),
+                        }
+                    )
+                except:
+                    pass
 
 
 get_missing_metadata()
