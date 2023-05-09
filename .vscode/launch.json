@@ -51,6 +51,14 @@
       "program": "./random_entry.py",
       "console": "integratedTerminal",
       "justMyCode": true
+    },
+    {
+      "name": "migrate_urls.py",
+      "type": "python",
+      "request": "launch",
+      "program": "./migrate_urls.py",
+      "console": "integratedTerminal",
+      "justMyCode": true
     }
   ]
 }
