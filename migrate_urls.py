@@ -70,7 +70,7 @@ def do_migration():
                     f.write(f"{url} ===> https://ksk.moe{links[0]['href']}\n")
 
 
-def verify_migration():
+def update_index():
     def parse_line(line: str) -> Tuple[str, str]:
         m = URL_PATTERN.match(line)
         if len(m.groups()) != 2:
@@ -78,9 +78,23 @@ def verify_migration():
         return m.group(1), m.group(2)
 
     with url_migration_csv.open(mode="r", encoding="utf-8") as f:
-        entries = [parse_line(line) for line in f.readlines()]
-        print(entries)
+        url_migration_data = [parse_line(line) for line in f.readlines()]
+
+    migrated_index_data = {
+        artist: {
+            entry: new_url if new_url != "<missing>" else old_url
+            for entry, url in entries.items()
+            for old_url, new_url in url_migration_data
+            if old_url == url
+        }
+        for artist, entries in index_data.items()
+    }
+
+    with index_json.open(mode="w", encoding="utf-8") as f:
+        json.dump(
+            obj=migrated_index_data, fp=f, indent=2, ensure_ascii=False, sort_keys=True
+        )
+        f.write("\n")
 
 
-do_migration()
-verify_migration()
+update_index()
