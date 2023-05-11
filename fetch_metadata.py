@@ -11,7 +11,6 @@ from tinydb import TinyDB
 PLURAL_MAP = {
     "artist": "artists",
     "circle": "circles",
-    "official source": "official sources",
     "magazine": "magazines",
     "parody": "parodies",
     "tag": "tags",
@@ -21,83 +20,111 @@ HREF_PATTERN = re.compile(r"\/.+\/(?P<name>.+)")
 
 index_json = Path.cwd() / "index.json"
 data_dir = Path.cwd() / "data"
-db = TinyDB("db.json", indent=2, ensure_ascii=False, sort_keys=True)
+db = TinyDB("db.json", indent=2, ensure_ascii=False, sort_keys=True, encoding="utf-8")
+
+
+def resolve_external_url(ksk_url: str) -> str:
+    response = requests.get(f"https://ksk.moe{ksk_url}")
+    return response.url
 
 
 def get_metadata(url):
     page = requests.get(url)
     soup = BeautifulSoup(page.text, "html.parser").find(id="metadata")
+    if soup is None:
+        raise Exception(f"============== bad url ==============")
+
     links = soup.find_all(class_="l")
 
     metadata = {
         "title": None,
         "archive_name": None,
+        "category": None,
+        "uploader": None,
         "artists": [],
-        "magazines": None,
-        "official_sources": None,
         "circles": None,
+        "magazines": None,
         "parodies": None,
         "tags": [],
         "pages": 0,
-        "uploader": None,
+        "official_sources": None,
         "size": None,
-        "created_date": None,
-        "uploaded_date": None,
+        "date_uploaded": None,
+        "date_archived": None,
+        "date_published": None,
+        "date_updated": None,
     }
 
     metadata["title"] = soup.h1.text
     metadata["archive_name"] = soup.h2.text
+    metadata["uploader"] = next(
+        (
+            div.div.text
+            for div in soup.main.find_all("div", recursive=False)
+            if div.strong.text == "Uploader"
+        ),
+        None,
+    )
 
     for link in links:
         raw_type = link.parent.strong.text.lower()
         type = PLURAL_MAP[raw_type] if raw_type in PLURAL_MAP else raw_type
         entries = link.find_all("a")
         if not entries:
-            raise Exception("what")
-        if type == "pages":
+            raise Exception("============== no links found ==============")
+        if type == "length":
             if len(entries) > 1:
-                raise Exception("fucken what now")
+                raise Exception("============== multiple page numbers ==============")
             metadata["pages"] = int(
                 PAGES_PATTERN.match(entries[0]["href"]).group("pages")
             )
-        elif type == "official sources":
+        elif type == "metadata":
             metadata["official_sources"] = [
                 {
-                    "url": entry["href"],
+                    "url": resolve_external_url(entry["href"]),
                     "display_name": entry.span.text,
                 }
                 for entry in entries
             ]
         else:
-            data = [
-                {
-                    "name": HREF_PATTERN.match(entry["href"]).group("name"),
-                    "display_name": entry.span.text,
-                }
-                for entry in entries
-            ]
+            data = [entry.span.text for entry in entries]
             if type not in PLURAL_MAP.values():
                 if len(entries) > 1:
-                    raise Exception("i fucken knew it")
+                    raise Exception("============== unexpected list ==============")
                 data = data[0]
             metadata[type] = data
 
     metadata["size"] = next(
-        div.div.text
-        for div in soup.find_all("div", recursive=False)
-        if div.strong.text == "Size"
+        div.div.text.strip().replace("\n", " ")
+        for div in soup.main.find_all("div", recursive=False)
+        if div.strong.text == "Size (Ori.)"
     )
-    created = soup.find(class_="created")
-    metadata["created_date"] = {
-        "epoch": int(created["data-timestamp"]),
-        "display": created.text.strip(),
-    }
 
-    uploaded = soup.find(class_="published")
-    metadata["uploaded_date"] = {
+    uploaded = next(
+        div.div.time
+        for div in soup.main.find_all("div", recursive=False)
+        if div.strong.text == "Uploaded"
+    )
+    metadata["date_uploaded"] = {
         "epoch": int(uploaded["data-timestamp"]),
         "display": uploaded.text.strip(),
     }
+    archived = soup.find(class_="created")
+    metadata["date_archived"] = {
+        "epoch": int(archived["data-timestamp"]),
+        "display": archived.text.strip(),
+    }
+    published = soup.find(class_="published")
+    metadata["date_published"] = {
+        "epoch": int(published["data-timestamp"]),
+        "display": published.text.strip(),
+    }
+    updated = soup.find(class_="updated")
+    metadata["date_updated"] = {
+        "epoch": int(updated["data-timestamp"]),
+        "display": updated.text.strip(),
+    }
+
     return metadata
 
 
@@ -110,21 +137,26 @@ def get_missing_metadata():
             metadata_json = data_dir / artist / entry / "metadata.json"
             if not metadata_json.exists():
                 print(f"fetching metadata for {artist}/{entry}")
-                metadata = get_metadata(url)
-                with metadata_json.open(mode="w", encoding="utf-8") as f:
-                    json.dump(
-                        obj=metadata, fp=f, indent=2, ensure_ascii=False, sort_keys=True
-                    )
-                    f.write("\n")
                 try:
+                    metadata = get_metadata(url)
+                    with metadata_json.open(mode="w", encoding="utf-8") as f:
+                        json.dump(
+                            obj=metadata,
+                            fp=f,
+                            indent=2,
+                            ensure_ascii=False,
+                            sort_keys=True,
+                        )
+                        f.write("\n")
                     db.insert(
                         {
                             **metadata,
                             "json_path": metadata_json.relative_to(data_dir).as_posix(),
                         }
                     )
-                except:
-                    pass
+                except Exception as e:
+                    print(f"failed to fetch metadata for {url}")
+                    print(e)
 
 
 get_missing_metadata()
