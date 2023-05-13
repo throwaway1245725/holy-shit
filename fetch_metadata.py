@@ -30,11 +30,12 @@ def resolve_external_url(ksk_url: str) -> str:
 
 def get_metadata(url):
     page = requests.get(url)
-    soup = BeautifulSoup(page.text, "html.parser").find(id="metadata")
-    if soup is None:
+    soup = BeautifulSoup(page.text, "html.parser")
+    soup_metadata = soup.find(id="metadata")
+    if soup_metadata is None:
         raise Exception(f"============== bad url ==============")
 
-    links = soup.find_all(class_="l")
+    links = soup_metadata.find_all(class_="l")
 
     metadata = {
         "title": None,
@@ -53,14 +54,15 @@ def get_metadata(url):
         "date_archived": None,
         "date_published": None,
         "date_updated": None,
+        "description": None,
     }
 
-    metadata["title"] = soup.h1.text
-    metadata["archive_name"] = soup.h2.text
+    metadata["title"] = soup_metadata.h1.text
+    metadata["archive_name"] = soup_metadata.h2.text
     metadata["uploader"] = next(
         (
             div.div.text
-            for div in soup.main.find_all("div", recursive=False)
+            for div in soup_metadata.main.find_all("div", recursive=False)
             if div.strong.text == "Uploader"
         ),
         None,
@@ -96,34 +98,38 @@ def get_metadata(url):
 
     metadata["size"] = next(
         div.div.text.strip().replace("\n", " ")
-        for div in soup.main.find_all("div", recursive=False)
+        for div in soup_metadata.main.find_all("div", recursive=False)
         if div.strong.text == "Size (Ori.)"
     )
 
     uploaded = next(
         div.div.time
-        for div in soup.main.find_all("div", recursive=False)
+        for div in soup_metadata.main.find_all("div", recursive=False)
         if div.strong.text == "Uploaded"
     )
     metadata["date_uploaded"] = {
         "epoch": int(uploaded["data-timestamp"]),
         "display": uploaded.text.strip(),
     }
-    archived = soup.find(class_="created")
+    archived = soup_metadata.find(class_="created")
     metadata["date_archived"] = {
         "epoch": int(archived["data-timestamp"]),
         "display": archived.text.strip(),
     }
-    published = soup.find(class_="published")
+    published = soup_metadata.find(class_="published")
     metadata["date_published"] = {
         "epoch": int(published["data-timestamp"]),
         "display": published.text.strip(),
     }
-    updated = soup.find(class_="updated")
+    updated = soup_metadata.find(class_="updated")
     metadata["date_updated"] = {
         "epoch": int(updated["data-timestamp"]),
         "display": updated.text.strip(),
     }
+
+    soup_description = soup.find(id="description")
+    if soup_description:
+        metadata["description"] = soup_description.main.text.strip()
 
     return metadata
 
@@ -159,4 +165,4 @@ def get_missing_metadata():
                     print(e)
 
 
-get_missing_metadata()
+get_metadata("https://ksk.moe/view/11524/23cc9e2469ab")
