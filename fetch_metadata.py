@@ -165,4 +165,4 @@ def get_missing_metadata():
                     print(e)
 
 
-get_metadata("https://ksk.moe/view/11524/23cc9e2469ab")
+get_missing_metadata()
