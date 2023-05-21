@@ -29,6 +29,14 @@
       "justMyCode": true
     },
     {
+      "name": "process_favorites.py",
+      "type": "python",
+      "request": "launch",
+      "program": "./process_favorites.py",
+      "console": "integratedTerminal",
+      "justMyCode": true
+    },
+    {
       "name": "search_metadata.py",
       "type": "python",
       "request": "launch",
@@ -49,14 +57,6 @@
       "type": "python",
       "request": "launch",
       "program": "./random_entry.py",
-      "console": "integratedTerminal",
-      "justMyCode": true
-    },
-    {
-      "name": "migrate_urls.py",
-      "type": "python",
-      "request": "launch",
-      "program": "./migrate_urls.py",
       "console": "integratedTerminal",
       "justMyCode": true
     }
