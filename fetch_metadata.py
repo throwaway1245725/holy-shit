@@ -1,3 +1,4 @@
+import collections
 import json
 import re
 from pathlib import Path
@@ -134,10 +135,34 @@ def get_metadata(url):
     return metadata
 
 
+def check_duplicates(index_data):
+    duplicate_urls = set(
+        item
+        for item, count in collections.Counter(
+            url
+            for _artist, entries in index_data.items()
+            for _entry, url in entries.items()
+            if url
+        ).items()
+        if count > 1
+    )
+    if duplicate_urls:
+        duplicate_urls_str = "\n".join(
+            f"{artist}/{entry}:{url}"
+            for artist, entries in index_data.items()
+            for entry, url in entries.items()
+            if url in duplicate_urls
+        )
+        print(f"duplicate urls detected: \n{duplicate_urls_str}")
+
+
 def get_missing_metadata():
     print("fetching missing metadata")
     with index_json.open(mode="r", encoding="utf-8") as f:
         index_data: Dict[str, Dict[str, str]] = json.load(f)
+
+    check_duplicates(index_data)
+
     for artist, entries in index_data.items():
         for entry, url in entries.items():
             metadata_json = data_dir / artist / entry / "metadata.json"
