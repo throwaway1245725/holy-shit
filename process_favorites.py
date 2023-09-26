@@ -9,6 +9,7 @@ from bs4 import BeautifulSoup
 
 URL_PATTERN = re.compile(r"https:\/\/ksk\.moe\/view\/(.*)")
 N_RESULTS_PATTERN = re.compile(r"Found (.*) result")
+FAVORITE_STATUS_INDICATOR = "unfavorite"
 
 index_json = Path.cwd() / "index.json"
 favorited_json = Path.cwd() / "favorited.json"
@@ -55,16 +56,10 @@ def add_missing_favorites():
 
 
 def find_weirdness():
-    with favorited_json.open("r", encoding="utf-8") as f:
-        favorited_data: Dict[str, str] = json.load(f)
-    urls = set(favorited_data.keys())
-    print(f"number of entries in total: {len(urls)}")
     for artist, entries in index_data.items():
         page = requests.get(
             f'https://ksk.moe/favorites?s=artist:"{artist}"',
-            headers={
-                "cookie": "refresh=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2ODYzMjcxMzYsImlkIjoiMmVjNWJjMGEtOTY1NS00MTEzLWI5OGMtNDEyODEyZWJmYmQ5In0.pPSAqrnMyUuN7ILXrKfyndWxsIUDeRS3_QqKae6-wrs; session=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2ODQ2OTk3MDAsImlkIjoiODU0OTUwNDEtZjVkNi00ZTZlLWI5YmItOTk0MDBiZDQyYzEwIn0.Akkr7d5jq6phHak2DSwluKT_ojsEStVdj9BFzFrrQvQ; __cf_bm=s6e2lQHKpZSMVgTTGGCLfdtxGKVj_6SLD0Xt0heKySc-1684697901-0-AXX5/0/3M0DFGG4AUSJSkv26pVFuLgo/nRqjWB0zMrztZdaxoUtBsqkfxbqTuiUJuQOH/1MCHhx7dtRHAIMTP+0/GzWVnXyL3wN23j7WBFnJ; zeit=MTY4NDY5OTI2OXxEdi1CQkFFQ180SUFBUkFCRUFBQV8tN19nZ0FDQm5OMGNtbHVad3dLQUFoamMzSm1VMkZzZEFaemRISnBibWNNRWdBUVVXOWxRM0JUVVRaRlFsSXdiMkZQTlFaemRISnBibWNNQmdBRVgyMXpad1p6ZEhKcGJtY01fNk1BXzZCU01rWnpZa2RXZVdWVFFXNVRNMVo1WWpOT01VbEZaR2hrUjBaNVlWTkJkRWxGVW1oamJYUnNZek5SWjFKSFZucGhXRXBzVDJsQ1ZXRkhWV2RSYld4dVNVVktjMWxYVG5KSlJVNTJZa2Q0YkZrelVuQmlNalJuUzBOTmVFMVVWVEJOUXpnMVRsUkJkMDFxWnpSWk1ra3lXWHBCY0VwNVFtOVpXRTFuV1cxV2JHSnBRbmxhVnpGMlpHMVdhMGxIV25saU1qQm5XbTFHTW1JelNuQmtSMVo2fKT_gSZJkYClScWXMRHUET4As4h7szn2LJLRATs1YSO_"
-            },
+            headers={"cookie": cookies},
         )
         soup = BeautifulSoup(page.text, "html.parser")
         n_results_str = soup.find(id="galleries").header.i.text
@@ -77,5 +72,32 @@ def find_weirdness():
             )
 
 
+def count_total_favorites():
+    with favorited_json.open("r", encoding="utf-8") as f:
+        favorited_data: Dict[str, str] = json.load(f)
+    urls = set(favorited_data.keys())
+    print(f"number of entries in total: {len(urls)}")
+
+
+def check_favorite_urls():
+    with favorited_json.open("r", encoding="utf-8") as f:
+        favorited_data: Dict[str, str] = json.load(f)
+    for url, name in favorited_data.items():
+        print(f"checking {name}")
+        check_favorite_url(url)
+
+
+def check_favorite_url(url):
+    page = requests.get(url, headers={"cookie": cookies})
+    soup = BeautifulSoup(page.text, "html.parser")
+    favorite_status = (
+        soup.find(id="actions").find("button", class_="favorite").span.text
+    ).lower()
+    if favorite_status != FAVORITE_STATUS_INDICATOR:
+        print(f"favorite status mismatch: {url}")
+
+
 add_missing_favorites()
+count_total_favorites()
+# check_favorite_urls()
 # find_weirdness()
