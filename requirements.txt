@@ -2,3 +2,4 @@ black
 bs4
 requests
 tinydb
+pyyaml
