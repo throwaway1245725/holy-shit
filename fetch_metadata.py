@@ -69,7 +69,7 @@ def get_local_metadata(entry_path: Path):
     circles_str = ",".join(metadata["circles"]) if metadata["circles"] else ""
     metadata[
         "archive_name"
-    ] = f"[{f'{circles_str}[{artists_str}]' if circles_str else artists_str}] {entry_path.name}"
+    ] = f"[{f'{circles_str} ({artists_str})' if circles_str else artists_str}] {entry_path.name}"
 
     metadata["category"] = "Manga" if "Magazine" in yaml_data.keys() else "Doujinshi"
     metadata["magazines"] = yaml_data.get("Magazine", None)
