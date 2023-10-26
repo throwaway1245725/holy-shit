@@ -1,5 +1,8 @@
 black
 bs4
+python-dotenv
+pyyaml
+selenium-interceptor
 requests
 tinydb
-pyyaml
+undetected_chromedriver
