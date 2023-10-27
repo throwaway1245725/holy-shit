@@ -12,7 +12,7 @@ N_RESULTS_PATTERN = re.compile(r"Found (.*) result")
 FAVORITE_STATUS_INDICATOR = "unfavorite"
 
 index_json = Path.cwd() / "index.json"
-favorited_json = Path.cwd() / "favorited.json"
+favorited_json = Path.cwd() / "favorited_ksk.json"
 cookies_txt = Path.cwd() / "cookies.txt"
 
 with cookies_txt.open("r") as f:

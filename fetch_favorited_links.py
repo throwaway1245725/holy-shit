@@ -22,7 +22,7 @@ HEADLESS = os.getenv("HEADLESS", "true").lower() == "true"
 TIMEOUT = int(os.getenv("TIMEOUT", 10))
 
 cookies_txt = Path.cwd() / "cookies.txt"
-favorited2_json = Path.cwd() / "favorited2.json"
+favorited_json = Path.cwd() / "favorited_anchira.json"
 
 with cookies_txt.open("r") as f:
     cookies_str = f.read()
@@ -107,7 +107,7 @@ def parse_favorite_page(page):
         BASE_URL + f"/favorites?page={page}", FAVORITE_ARTICLE_SELECTOR
     )
     articles = browser.find_elements(By.CSS_SELECTOR, FAVORITE_ARTICLE_SELECTOR)
-    with favorited2_json.open("r+", encoding="utf-8") as f:
+    with favorited_json.open("r+", encoding="utf-8") as f:
         favorited_data: Dict[str, str] = json.load(f)
         for article in articles:
             a = article.find_element(By.TAG_NAME, "a")
