@@ -1,6 +1,7 @@
 .browser_data
 .env
 .venv
+cookies.txt
 data
 data.7z
-cookies.txt
+downloaded

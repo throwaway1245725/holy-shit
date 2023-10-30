@@ -133,7 +133,7 @@ PAGE_PATTERN = re.compile(r".*\/favorites\?page=(\d+)")
 
 
 def get_favorites():
-    waiting_loading_page(BASE_URL + "/favorites", FAVORITE_ARTICLE_SELECTOR)
+    waiting_loading_page(f"{BASE_URL}/favorites", FAVORITE_ARTICLE_SELECTOR)
     last_page_btn = browser.find_element(
         By.CSS_SELECTOR, '#main > #feed > footer > nav > a[title*="last page"'
     )
