@@ -1,23 +1,23 @@
 import json
 import logging
 import os
-import re
 import sys
 from pathlib import Path
 from time import sleep
-from typing import Callable, Dict, Tuple
+from typing import Any, Callable, Dict, Tuple, Union
 
 import undetected_chromedriver as uc
 from dotenv import load_dotenv
 from selenium.common.exceptions import StaleElementReferenceException, TimeoutException
 from selenium.webdriver.common.by import By
+from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.wait import WebDriverWait
 
 log = logging.getLogger()
-log.setLevel("INFO")
+log.setLevel(logging.INFO)
+logging.getLogger("urllib3").setLevel(logging.ERROR)
 handler = logging.StreamHandler(sys.stdout)
-handler.setLevel("INFO")
 formatter = logging.Formatter(
     "[%(asctime)s] {%(filename)s:%(lineno)d} %(levelname)s - %(message)s",
     "%Y-%m-%d %H:%M:%S",
@@ -97,29 +97,50 @@ def get_url(url):
             sleep(0.1)
 
 
-def wait_for_condition(condition: Callable):
-    elm_found = False
+def wait_for_condition(
+    condition: Callable[[expected_conditions.AnyDriver], Any], selector=""
+) -> WebElement:
+    elm_found = None
     while not elm_found:
         try:
             elm_found = WebDriverWait(browser, TIMEOUT).until(condition)
         except TimeoutException as err:
-            log.info(err)
+            log.warning(f"timeout while wait_for_condition: {selector}")
+            log.debug(err)
+    return elm_found
 
 
-def do_while_wait_for_condition(fn: Callable, condition: Callable):
-    elm_found = False
+def wait_for_condition_once(
+    condition: Callable[[expected_conditions.AnyDriver], Any], selector=""
+) -> Union[WebElement, None]:
+    try:
+        return WebDriverWait(browser, TIMEOUT).until(condition)
+    except TimeoutException:
+        log.warning(f"timeout while wait_for_condition_once: {selector}")
+        return
+
+
+def do_while_wait_for_condition(
+    fn: Callable[[], None],
+    condition: Callable[[expected_conditions.AnyDriver], Any],
+    selector="",
+) -> WebElement:
+    elm_found = None
     while not elm_found:
         try:
             fn()
             elm_found = WebDriverWait(browser, 1).until(condition)
         except TimeoutException as err:
-            log.info(err)
+            log.warning(f"timeout while do_while_wait_for_condition: {selector}")
+            log.debug(err)
+    return elm_found
 
 
 def set_cookies(browser: uc.Chrome):
     get_url(BASE_URL)
     wait_for_condition(
-        expected_conditions.presence_of_element_located((By.CSS_SELECTOR, "#main"))
+        expected_conditions.presence_of_element_located((By.CSS_SELECTOR, "#main")),
+        "#main",
     )
     for cookie_dict in cookie_dicts:
         browser.add_cookie(cookie_dict)
@@ -169,44 +190,43 @@ DOWNLOADER_EMPTY_SELECTOR = "#downloader main:not(:has(article))"
 def download_archive(url):
     get_url(url)
     wait_for_condition(
-        text_not_empty_in_element((By.CSS_SELECTOR, ARCHIVE_NAME_SELECTOR))
+        text_not_empty_in_element((By.CSS_SELECTOR, ARCHIVE_NAME_SELECTOR)),
+        "ARCHIVE_NAME_SELECTOR",
     )
-    wait_for_condition(
+    download_btn = wait_for_condition(
         expected_conditions.presence_of_element_located(
             (By.CSS_SELECTOR, DOWNLOAD_BTN_SELECTOR)
-        )
+        ),
+        "DOWNLOAD_BTN_SELECTOR",
     )
-    download_btn = browser.find_element(By.CSS_SELECTOR, DOWNLOAD_BTN_SELECTOR)
     download_btn.click()
 
-    wait_for_condition(
+    original_btn = wait_for_condition(
         expected_conditions.visibility_of_element_located(
             (By.CSS_SELECTOR, ORIGINAL_BTN_SELECTOR)
-        )
+        ),
     )
-    original_btn = browser.find_element(By.CSS_SELECTOR, ORIGINAL_BTN_SELECTOR)
     do_while_wait_for_condition(
         lambda: original_btn.click(),
         expected_conditions.invisibility_of_element(
             (By.CSS_SELECTOR, ORIGINAL_BTN_SELECTOR)
         ),
+        "ORIGINAL_BTN_SELECTOR",
     )
-    wait_for_condition(
+    filename_el = wait_for_condition_once(
         expected_conditions.presence_of_element_located(
             (By.CSS_SELECTOR, DOWNLOADER_FILENAME_SELECTOR)
-        )
+        ),
+        "DOWNLOADER_FILENAME_SELECTOR",
     )
-    archive_filename = (
-        browser.find_element(By.CSS_SELECTOR, DOWNLOADER_FILENAME_SELECTOR)
-        .text.replace(":", "_")
-        .replace("?", "_")
-    )
-
-    write_to_downloaded_json(url, archive_filename)
+    if filename_el:
+        archive_filename = filename_el.text.replace(":", "_").replace("?", "_")
+        write_to_downloaded_json(url, archive_filename)
     wait_for_condition(
         expected_conditions.presence_of_element_located(
             (By.CSS_SELECTOR, DOWNLOADER_EMPTY_SELECTOR)
-        )
+        ),
+        "DOWNLOADER_EMPTY_SELECTOR",
     )
 
 
@@ -215,7 +235,7 @@ def download_all_favorites():
         with downloaded_json.open("r", encoding="utf-8") as f:
             downloaded_data: Dict[str, str] = json.load(f)
         if not url in downloaded_data.keys():
-            log.info(f"downloading favorite: {url}:{path}")
+            log.warning(f"downloading favorite: '{url} : {path}'")
             download_archive(url)
 
 
