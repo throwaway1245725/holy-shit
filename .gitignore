@@ -3,5 +3,7 @@
 .venv
 cookies.txt
 data
-data.7z
+data_old
 downloaded
+__pycache__
+*.pyc

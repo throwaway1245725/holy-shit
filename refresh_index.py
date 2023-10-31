@@ -2,7 +2,7 @@ import collections
 import json
 import re
 from pathlib import Path
-from typing import Dict, List, Set, Tuple
+from typing import Dict, List, Set, Tuple, Union
 
 data_dir = Path.cwd() / "data"
 index_json = Path.cwd() / "index.json"
@@ -176,8 +176,8 @@ def clean_filenames():
         max_int_length: int,
         file_suffix: str,
         page1: str,
-        page2: str = None,
-        suffix: str = None,
+        page2: Union[str, None] = None,
+        suffix: Union[str, None] = None,
     ) -> str:
         if page2:
             if suffix:
@@ -253,7 +253,7 @@ def clean_filenames():
 
     def process_entry(entry: Path):
         entry_matches: Set[Tuple[Path, re.Match]] = set()
-        matched_pattern_name: str = None
+        matched_pattern_name: Union[str, None] = None
 
         def check_match(pattern_name: str, page: Path):
             nonlocal matches
@@ -272,6 +272,8 @@ def clean_filenames():
             for pattern_name in PATTERNS.keys():
                 check_match(pattern_name, page)
 
+        if not matched_pattern_name:
+            raise Exception("no cleaner found")
         CLEANERS[matched_pattern_name](entry_matches)
 
     for artist in data_dir.iterdir():
