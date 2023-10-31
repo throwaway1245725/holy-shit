@@ -29,10 +29,18 @@
       "justMyCode": true
     },
     {
-      "name": "refresh_index.py",
+      "name": "process_downloaded.py",
       "type": "python",
       "request": "launch",
-      "program": "./refresh_index.py",
+      "program": "./process_downloaded.py",
+      "console": "integratedTerminal",
+      "justMyCode": false
+    },
+    {
+      "name": "clean_favorited.py",
+      "type": "python",
+      "request": "launch",
+      "program": "./clean_favorited.py",
       "console": "integratedTerminal",
       "justMyCode": true
     },

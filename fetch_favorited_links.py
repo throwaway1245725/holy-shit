@@ -10,8 +10,7 @@ from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support import expected_conditions
 
 from browser_setup import BASE_URL, get_url, wait_for_condition
-
-log = logging.getLogger()
+from log_setup import log
 
 IGNORE_ALREADY_PROCESSED = (
     os.getenv("IGNORE_ALREADY_PROCESSED", "true").lower() == "true"

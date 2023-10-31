@@ -14,8 +14,7 @@ from browser_setup import (
     wait_for_condition,
     wait_for_condition_once,
 )
-
-log = logging.getLogger()
+from log_setup import log
 
 download_dir = Path.cwd() / "downloaded"
 favorited_json = Path.cwd() / "favorited.json"
