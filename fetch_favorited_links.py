@@ -5,6 +5,7 @@ import re
 from pathlib import Path
 from typing import Dict, List
 
+from dotenv import load_dotenv
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support import expected_conditions
@@ -12,16 +13,17 @@ from selenium.webdriver.support import expected_conditions
 from browser_setup import BASE_URL, get_url, wait_for_condition
 from log_setup import log
 
+load_dotenv()
+
 IGNORE_ALREADY_PROCESSED = (
     os.getenv("IGNORE_ALREADY_PROCESSED", "true").lower() == "true"
 )
 
 favorited_json = Path.cwd() / "favorited.json"
 
-FAVORITE_ARTICLE_SELECTOR = "#main > #feed > main > article"
-
 
 def parse_favorite_page(page: int) -> bool:
+    FAVORITE_ARTICLE_SELECTOR = "#main > #feed > main > article"
     get_url(f"{BASE_URL}/favorites?page={page}")
     articles: List[WebElement] = wait_for_condition(
         expected_conditions.presence_of_all_elements_located(
@@ -57,11 +59,9 @@ def parse_favorite_page(page: int) -> bool:
         return reached_already_processed
 
 
-PAGE_PATTERN = re.compile(r".*\/favorites\?page=(\d+)")
-LAST_PAGE_SELECTOR = "#main > #feed > footer > nav > a[title*='last page']"
-
-
 def get_favorites():
+    PAGE_PATTERN = re.compile(r".*\/favorites\?page=(\d+)")
+    LAST_PAGE_SELECTOR = "#main > #feed > footer > nav > a[title*='last page']"
     get_url(f"{BASE_URL}/favorites")
     last_page_btn: WebElement = wait_for_condition(
         expected_conditions.presence_of_element_located(

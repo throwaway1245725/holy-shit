@@ -1,3 +1,5 @@
+__pycache__
+*.pyc
 .browser_data
 .env
 .venv
@@ -5,5 +7,4 @@ cookies.txt
 data
 data_old
 downloaded
-__pycache__
-*.pyc
+robocopy.ps1

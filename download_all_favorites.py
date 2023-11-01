@@ -38,14 +38,12 @@ def write_to_downloaded_json(url: str, filename: str):
             f.truncate()
 
 
-ARCHIVE_NAME_SELECTOR = "#gallery #metadata > header > span.s"
-DOWNLOAD_BTN_SELECTOR = "#gallery #actions > button[title='Download']"
-ORIGINAL_BTN_SELECTOR = "#modal #downloads > button[title='Original']"
-DOWNLOADER_FILENAME_SELECTOR = "#downloader > main > article > header > button > h3"
-DOWNLOADER_EMPTY_SELECTOR = "#downloader main:not(:has(article))"
-
-
 def download_archive(url):
+    ARCHIVE_NAME_SELECTOR = "#gallery #metadata > header > span.s"
+    DOWNLOAD_BTN_SELECTOR = "#gallery #actions > button[title='Download']"
+    ORIGINAL_BTN_SELECTOR = "#modal #downloads > button[title='Original']"
+    DOWNLOADER_FILENAME_SELECTOR = "#downloader > main > article > header > button > h3"
+    DOWNLOADER_EMPTY_SELECTOR = "#downloader main:not(:has(article))"
     get_url(url)
     wait_for_condition(
         text_not_empty_in_element((By.CSS_SELECTOR, ARCHIVE_NAME_SELECTOR)),

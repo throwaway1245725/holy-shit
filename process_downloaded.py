@@ -7,8 +7,8 @@ from typing import Dict, List, Set, Tuple, Union
 
 from log_setup import log
 
-data_dir = Path("C:/Temp/data")
-downloaded_dir = Path("C:/Temp/downloaded")
+data_dir = Path.cwd() / "data"
+downloaded_dir = Path.cwd() / "downloaded"
 downloaded_json = Path.cwd() / "downloaded.json"
 index_json = Path.cwd() / "index.json"
 with index_json.open(mode="r", encoding="utf-8") as f:
