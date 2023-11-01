@@ -1,6 +1,7 @@
 import json
 import logging
 from pathlib import Path
+from time import sleep
 from typing import Dict, Union
 
 from selenium.webdriver.common.by import By
@@ -84,6 +85,7 @@ def download_archive(url):
         ),
         "DOWNLOADER_EMPTY_SELECTOR",
     )
+    sleep(2)
 
 
 def download_all_favorites():

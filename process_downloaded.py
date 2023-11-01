@@ -105,6 +105,8 @@ def rename_and_add_entries():
                 None,
             )
             if entry_url:
+                if artist_path.name not in index_data.keys():
+                    index_data[artist_path.name] = {}
                 dest_entry_name = next(
                     (
                         entry
@@ -114,10 +116,10 @@ def rename_and_add_entries():
                     None,
                 )
                 if not dest_entry_name:
+                    dest_entry_name = clean_directory_name(source_entry_path.name)
                     log.info(
                         f"adding entry to index and favorited: {artist_path.name}/{dest_entry_name}"
                     )
-                    dest_entry_name = clean_directory_name(source_entry_path.name)
                     index_data[artist_path.name][dest_entry_name] = entry_url
                     with index_json.open("w", encoding="utf-8") as f:
                         json.dump(
