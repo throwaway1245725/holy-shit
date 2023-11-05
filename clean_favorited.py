@@ -28,7 +28,9 @@ def clean_favorited():
                 for entry, url in entries.items()
                 if url == entry_url
             )
-            log.info(f"renaming {entry_name} to {favorited_data[entry_url]}")
+            log.info(
+                f"renaming '{entry_name}' =============> '{favorited_data[entry_url]}'"
+            )
         favorited_data = dict(sorted(favorited_data.items(), key=lambda item: item[1]))
         f.seek(0)
         json.dump(obj=favorited_data, fp=f, indent=2, ensure_ascii=False)
