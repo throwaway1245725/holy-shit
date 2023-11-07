@@ -173,6 +173,7 @@ def clean_filenames():
         "underscores": re.compile(r"_(?P<page1>\d+)_x3200"),
         "million_zeros": re.compile(r"^[a-zA-Z]+[_-]+(?P<page1>\d+)$"),
         "irodori": re.compile(r"Page_(?P<page1>\d+)_Image_0001"),
+        "irodori_index": re.compile(r"index-(?P<page1>\d+)_1"),
         "wtf_is_that": re.compile(r"_3200x_(?P<page1>\d+)$"),
     }
 
@@ -259,6 +260,7 @@ def clean_filenames():
         "underscores": clean_simple,
         "million_zeros": clean_simple,
         "irodori": clean_simple,
+        "irodori_index": clean_simple,
         "wtf_is_that": clean_simple,
     }
 
