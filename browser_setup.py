@@ -21,6 +21,9 @@ BASE_URL = os.getenv("BASE_URL", "https://anchira.to")
 BROWSER_DATA_DIR = os.getenv("BROWSER_DATA_DIR")
 HEADLESS = os.getenv("HEADLESS", "true").lower() == "true"
 TIMEOUT = int(os.getenv("TIMEOUT", 10))
+CAPTCHA = os.getenv("CAPTCHA", "false").lower() == "true"
+if CAPTCHA:
+    HEADLESS = False
 
 cookies_txt = Path.cwd() / "cookies.txt"
 
