@@ -111,7 +111,7 @@ def download_archive(url):
         "DOWNLOADER_EMPTY_SELECTOR",
     )
     get_downloaded_filename(url, archive_name)
-    sleep(1)
+    sleep(0.5)
 
 
 def get_downloaded_filename(url: str, archive_name: str):
