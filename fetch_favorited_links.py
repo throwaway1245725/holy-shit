@@ -23,7 +23,7 @@ favorited_json = Path.cwd() / "favorited.json"
 
 
 def parse_favorite_page(page: int) -> bool:
-    FAVORITE_ARTICLE_SELECTOR = "#main > #feed > main > article"
+    FAVORITE_ARTICLE_SELECTOR = "#main > .feed > main > article"
     get_url(f"{BASE_URL}/favorites?page={page}")
     articles: List[WebElement] = wait_for_condition(
         expected_conditions.presence_of_all_elements_located(
@@ -61,7 +61,7 @@ def parse_favorite_page(page: int) -> bool:
 
 def get_favorites():
     PAGE_PATTERN = re.compile(r".*\/favorites\?page=(\d+)")
-    LAST_PAGE_SELECTOR = "#main > #feed > footer > nav > a[title*='last page']"
+    LAST_PAGE_SELECTOR = "#main > .feed > footer > nav > a[title*='last page']"
     get_url(f"{BASE_URL}/favorites")
     last_page_btn: WebElement = wait_for_condition(
         expected_conditions.presence_of_element_located(
