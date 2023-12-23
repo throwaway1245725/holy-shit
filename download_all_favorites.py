@@ -116,7 +116,11 @@ def download_archive(url):
 
 def get_downloaded_filename(url: str, archive_name: str):
     DUPLICATE_FILE_PATTERN = re.compile(r"^(.*) \(\d\)$")
-    archive_name = archive_name.replace(":", "_").replace("?", "_")
+
+    def sanitize_filename(filename: str):
+        return filename.replace(":", "_").replace("?", "_").replace("*", "_")
+
+    archive_name = sanitize_filename(archive_name)
 
     original_window = browser.current_window_handle
     browser.switch_to.new_window("tab")
@@ -127,7 +131,7 @@ def get_downloaded_filename(url: str, archive_name: str):
     filename: str = browser.execute_script(
         "return document.querySelector('downloads-manager').shadowRoot.querySelector('#downloadsList downloads-item').shadowRoot.querySelector('div#content  #file-link').text"
     )
-    source_archive_path = download_dir / filename.replace(":", "_").replace("?", "_")
+    source_archive_path = download_dir / sanitize_filename(filename)
     dest_archive_path = source_archive_path.with_name(
         f"{archive_name}{source_archive_path.suffix}"
     )
