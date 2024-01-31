@@ -54,7 +54,7 @@ def init_browser():
         options=options,
         patcher_force_close=True,
         enable_cdp_events=True,
-        version_main=119,
+        version_main=121,
     )
     new_browser.set_script_timeout(TIMEOUT)
     new_browser.set_page_load_timeout(TIMEOUT)
