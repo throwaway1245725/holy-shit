@@ -277,7 +277,7 @@ def clean_filenames():
                 if not matched_pattern_name:
                     matched_pattern_name = pattern_name
                 if matched_pattern_name and matched_pattern_name != pattern_name:
-                    raise Exception("what even")
+                    raise Exception(f"what even: {page.name}")
                 entry_matches.add((page, m[-1]))
 
         pages = [page for page in entry.iterdir() if page.suffix in IMAGE_SUFFIXES]
