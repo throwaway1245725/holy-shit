@@ -6,7 +6,7 @@
   "configurations": [
     {
       "name": "Python: Current File",
-      "type": "python",
+      "type": "debugpy",
       "request": "launch",
       "program": "${file}",
       "console": "integratedTerminal",
@@ -14,23 +14,23 @@
     },
     {
       "name": "fetch_favorited_links.py",
-      "type": "python",
+      "type": "debugpy",
       "request": "launch",
       "program": "./fetch_favorited_links.py",
       "console": "integratedTerminal",
-      "justMyCode": true
+      "justMyCode": false
     },
     {
       "name": "download_all_favorites.py",
-      "type": "python",
+      "type": "debugpy",
       "request": "launch",
       "program": "./download_all_favorites.py",
       "console": "integratedTerminal",
-      "justMyCode": true
+      "justMyCode": false
     },
     {
       "name": "process_downloaded.py",
-      "type": "python",
+      "type": "debugpy",
       "request": "launch",
       "program": "./process_downloaded.py",
       "console": "integratedTerminal",
@@ -38,27 +38,27 @@
     },
     {
       "name": "clean_favorited.py",
-      "type": "python",
+      "type": "debugpy",
       "request": "launch",
       "program": "./clean_favorited.py",
       "console": "integratedTerminal",
-      "justMyCode": true
+      "justMyCode": false
     },
     {
       "name": "search_metadata.py",
-      "type": "python",
+      "type": "debugpy",
       "request": "launch",
       "program": "./search_metadata.py",
       "console": "integratedTerminal",
-      "justMyCode": true
+      "justMyCode": false
     },
     {
       "name": "random_entry.py",
-      "type": "python",
+      "type": "debugpy",
       "request": "launch",
       "program": "./random_entry.py",
       "console": "integratedTerminal",
-      "justMyCode": true
+      "justMyCode": false
     }
   ]
 }

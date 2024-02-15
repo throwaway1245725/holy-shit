@@ -6,3 +6,5 @@ selenium-interceptor
 requests
 tinydb
 undetected_chromedriver
+debugpy
+importlib-metadata
