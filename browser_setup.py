@@ -25,7 +25,7 @@ CAPTCHA = os.getenv("CAPTCHA", "false").lower() == "true"
 if CAPTCHA:
     HEADLESS = False
 
-cookies_txt = Path.cwd() / "cookies.txt"
+cookies_txt = Path.cwd() / "a_cookies.txt"
 
 with cookies_txt.open("r") as f:
     cookies_str = f.read()

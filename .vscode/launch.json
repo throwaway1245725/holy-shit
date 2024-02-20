@@ -45,6 +45,14 @@
       "justMyCode": false
     },
     {
+      "name": "fetch_metadata.py",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "./fetch_metadata.py",
+      "console": "integratedTerminal",
+      "justMyCode": false
+    },
+    {
       "name": "search_metadata.py",
       "type": "debugpy",
       "request": "launch",

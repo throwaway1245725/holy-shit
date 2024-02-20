@@ -8,3 +8,5 @@ tinydb
 undetected_chromedriver
 debugpy
 importlib-metadata
+python-slugify
+pillow
