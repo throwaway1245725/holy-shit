@@ -5,6 +5,8 @@ import math
 import operator
 import os
 import re
+from datetime import datetime
+from email.utils import parsedate_to_datetime
 from functools import reduce
 from io import BytesIO
 from itertools import islice
@@ -12,6 +14,7 @@ from pathlib import Path
 from typing import Dict, Union
 from urllib.parse import urljoin, urlparse
 
+import pytz
 import requests
 from bs4 import BeautifulSoup
 from PIL import Image, ImageChops
@@ -77,7 +80,8 @@ def do_slugify(s: str) -> str:
             ["♀", ""],
             ["_", ""],
             [".", ""],
-            [":", ""],
+            [":", "-"],
+            ["꞉", "-"],
             ["*", ""],
             ["犬", ""],
         ],
@@ -140,6 +144,7 @@ def suggest_f(artist: str, title: str) -> Union[str, None]:
             suggestion
             for suggestion in suggestions
             if do_slugify(title) == do_slugify(suggestion["title"])
+            or title == do_slugify(suggestion["title"])
         ),
         None,
     )
@@ -153,12 +158,11 @@ def search_f(artist: str, title: str) -> Union[str, None]:
     page = get_url(f"{F_BASE_URL}/search/{artist} {title}")
     soup = BeautifulSoup(page.text, "html.parser")
     for entry in soup.select("div[id^='content-']"):
-        entry_title_el = entry.select("a.text-md")[0]
-        entry_title = entry_title_el.text.strip()
-        if do_slugify(entry_title) == do_slugify(title):
+        entry_title = entry.select("a.text-md")[0]
+        if do_slugify(entry_title.text.strip()) == do_slugify(title):
             for entry_artist in entry.select("a.text-sm"):
                 if do_slugify(entry_artist.text.strip()) == do_slugify(artist):
-                    url = entry_title_el["href"]
+                    url = entry_title["href"]
                     if isinstance(url, list):
                         url = url[0]
                     return f"{F_BASE_URL}{url}"
@@ -166,10 +170,16 @@ def search_f(artist: str, title: str) -> Union[str, None]:
 
 
 def suggest_i(artist: str, title: str) -> Union[str, None]:
-    response = get_url(
+    response_title = get_url(
         f"{I_BASE_URL}/index.php?route=extension/module/me_ajax_search/search&search={title}"
     )
-    suggestions = response.json()["products"]
+    response_artist = get_url(
+        f"{I_BASE_URL}/index.php?route=extension/module/me_ajax_search/search&search={artist}"
+    )
+    suggestions = [
+        *response_title.json()["products"],
+        *response_artist.json()["products"],
+    ]
     matching_title = next(
         (
             suggestion
@@ -189,13 +199,12 @@ def search_i(artist: str, title: str) -> Union[str, None]:
     soup = BeautifulSoup(page.text, "html.parser")
 
     for entry in soup.select("#product-search .main-products .product-thumb"):
-        entry_title_el = entry.select(".name a")[0]
-        entry_title = entry_title_el.text.strip()
-        entry_artist = entry.select(".stats a")[0].text.strip()
-        if do_slugify(entry_title) == do_slugify(title) and do_slugify(
-            entry_artist
+        entry_title = entry.select(".name a")[0]
+        entry_artist = entry.select(".stats a")[0]
+        if do_slugify(entry_title.text.strip()) == do_slugify(title) and do_slugify(
+            entry_artist.text.strip()
         ) == do_slugify(artist):
-            url = entry_title_el["href"]
+            url = entry_title["href"]
             if isinstance(url, list):
                 url = url[0]
             return urljoin(url, urlparse(url).path)
@@ -271,7 +280,11 @@ def fetch_metadata_f(url: str, entry_path: Path) -> Dict[str, str]:
                     a.text.strip() for a in tags if a.text.strip() != "+"
                 ]
             else:
-                metadata["description"] = "\n".join(str(l) for l in divs[0].contents)
+                metadata["description"] = "\n".join(
+                    str(l) for l in divs[0].contents
+                ).strip()
+
+    metadata["category"] = "manga" if metadata["magazines"] else "doujinshi"
 
     collections = soup.select(
         "div[id$='/collections'] b > a:not([href^='/collections'])"
@@ -295,9 +308,83 @@ def fetch_metadata_f(url: str, entry_path: Path) -> Dict[str, str]:
 
     metadata["thumbnail_page"] = get_thumbnail_page(thumbnail_url)
     thumbnail_img = get_url(thumbnail_url)
-    metadata["date_published"] = thumbnail_img.headers["last-modified"]
-    metadata["date_archived"] = os.path.getmtime(
-        next(f for f in entry_path.iterdir() if f.suffix in IMAGE_SUFFIXES)
+    metadata["date_published"] = parsedate_to_datetime(
+        thumbnail_img.headers["last-modified"]
+    ).isoformat()
+    metadata["date_archived"] = datetime.fromtimestamp(
+        os.path.getmtime(
+            next(f for f in entry_path.iterdir() if f.suffix in IMAGE_SUFFIXES)
+        )
+    ).isoformat()
+    return metadata
+
+
+def fetch_metadata_i(url: str, entry_path: Path) -> Dict[str, str]:
+    metadata = {
+        "title": None,
+        "artists": [],
+        "parodies": None,
+        "circles": None,
+        "events": None,
+        "magazines": None,
+        "publishers": None,
+        "pages": 0,
+        "direction": None,
+        "description": None,
+        "tags": [],
+        "thumbnail_page": 1,
+        "category": None,
+        "official_source": None,
+        "date_archived": None,
+        "date_published": None,
+        "collections": None,
+        "related": None,
+    }
+    metadata["official_source"] = url
+    metadata["parodies"] = ["Original Work"]
+    metadata["publishers"] = ["Irodori Comics"]
+    metadata["category"] = "doujinshi"
+
+    page = get_url(url)
+    soup = BeautifulSoup(page.text, "html.parser")
+
+    metadata["title"] = soup.select("h1.page-title")[0].text.strip()
+
+    main_container = soup.select("#product-product #content .product-info")[0]
+    right_container = main_container.select(".product-right")[0]
+    metadata["artists"] = [
+        artist.text.strip()
+        for artist in right_container.select(".product-manufacturer a")
+    ]
+    metadata["pages"] = int(right_container.select(".product-upc span")[0].text.strip())
+    metadata["description"] = "\n".join(
+        str(l)
+        for l in right_container.select(".product_extra .block-content")[0].contents
+    ).strip()
+    metadata["tags"] = [
+        tag.text.strip()
+        for tag in right_container.select(".tags a")
+        if tag.text.strip()
+    ]
+    left_container = main_container.select(".product-left")[0]
+    thumbnail_url = left_container.select(".main-image img")[0]["src"]
+    if isinstance(thumbnail_url, list):
+        thumbnail_url = thumbnail_url[0]
+
+    thumbnail_img = get_url(thumbnail_url)
+    metadata["date_published"] = parsedate_to_datetime(
+        thumbnail_img.headers["last-modified"]
+    ).isoformat()
+    metadata["date_archived"] = (
+        datetime.fromtimestamp(
+            int(
+                os.path.getmtime(
+                    next(f for f in entry_path.iterdir() if f.suffix in IMAGE_SUFFIXES)
+                )
+            )
+        )
+        .astimezone(pytz.utc)
+        .isoformat()
     )
     return metadata
 
@@ -316,7 +403,6 @@ def fetch_all():
                     clean_directory_name(entry),
                 )
                 if not source_url:
-                    # raise Exception(f"could not find source for {artist}/{entry}")
                     log.error(f"could not find source for {artist}/{entry}")
                     continue
                 log.info(f"found source for {artist}/{entry}   ---   {source_url}")
