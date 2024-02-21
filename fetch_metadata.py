@@ -1,24 +1,19 @@
 # pyright: reportOptionalMemberAccess=false
 # pyright: reportOptionalSubscript=false
 import json
-import math
-import operator
 import os
 import re
 from datetime import datetime
 from email.utils import parsedate_to_datetime
-from functools import reduce
-from io import BytesIO
-from itertools import islice
 from pathlib import Path
-from typing import Dict, Union
+from typing import Any, Dict, Union
 from urllib.parse import urljoin, urlparse
 
 import pytz
 import requests
 from bs4 import BeautifulSoup
-from PIL import Image, ImageChops
 from slugify import slugify
+from tinydb import TinyDB
 
 from log_setup import log
 
@@ -52,6 +47,10 @@ original_sources_json = Path.cwd() / "original_sources.json"
 with original_sources_json.open(mode="r", encoding="utf-8") as f:
     original_sources_data: Dict[str, str] = json.load(f)
 
+fallback_metadata_json = Path.cwd() / "fallback_metadata.json"
+with fallback_metadata_json.open(mode="r", encoding="utf-8") as f:
+    fallback_metadata_data: Dict[str, Dict[str, Any]] = json.load(f)
+
 cookies_txt = Path.cwd() / "f_cookies.txt"
 with cookies_txt.open("r") as f:
     cookies_str = f.read()
@@ -63,6 +62,7 @@ headers_dict = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     "X-Requested-With": "XMLHttpRequest",
 }
+db = TinyDB("db.json", indent=2, ensure_ascii=False, sort_keys=True, encoding="utf-8")
 
 
 def do_slugify(s: str) -> str:
@@ -112,27 +112,27 @@ def get_thumbnail_page(url: str) -> int:
 
 
 # this method isn't good enough, gotta try SSIM: https://stackoverflow.com/questions/71567315/how-to-get-the-ssim-comparison-score-between-two-images
-def check_thumbnail(thumbnail_url: str, entry_path: Path) -> bool:
-    thumbnail_img = Image.open(BytesIO(get_url(thumbnail_url).content))
-    thumbnail_page = get_thumbnail_page(thumbnail_url)
-    actual_img_path = next(islice(entry_path.iterdir(), thumbnail_page - 1, None))
-    actual_img = Image.open(actual_img_path).convert("RGB")
-    actual_img.thumbnail(thumbnail_img.size)
+# def check_thumbnail(thumbnail_url: str, entry_path: Path) -> bool:
+#     thumbnail_img = Image.open(BytesIO(get_url(thumbnail_url).content))
+#     thumbnail_page = get_thumbnail_page(thumbnail_url)
+#     actual_img_path = next(islice(entry_path.iterdir(), thumbnail_page - 1, None))
+#     actual_img = Image.open(actual_img_path).convert("RGB")
+#     actual_img.thumbnail(thumbnail_img.size)
 
-    try:
+#     try:
 
-        diff = ImageChops.difference(thumbnail_img, actual_img)
+#         diff = ImageChops.difference(thumbnail_img, actual_img)
 
-        # calculate rms
-        histo = diff.histogram()
-        rms = math.sqrt(
-            reduce(operator.add, map(lambda h, i: h * (i**2), histo, range(len(histo))))
-            / (float(thumbnail_img.size[0]) * actual_img.size[1])
-        )
-        diff.save("diff.bmp")
-        return rms < 600
-    except ValueError as e:
-        return False
+#         # calculate rms
+#         histo = diff.histogram()
+#         rms = math.sqrt(
+#             reduce(operator.add, map(lambda h, i: h * (i**2), histo, range(len(histo))))
+#             / (float(thumbnail_img.size[0]) * actual_img.size[1])
+#         )
+#         diff.save("diff.bmp")
+#         return rms < 600
+#     except ValueError as e:
+#         return False
 
 
 def suggest_f(artist: str, title: str) -> Union[str, None]:
@@ -244,14 +244,12 @@ def fetch_metadata_f(url: str, entry_path: Path) -> Dict[str, str]:
         "tags": [],
         "thumbnail_page": 1,
         "category": None,
-        "official_source": None,
+        "official_source": url,
         "date_archived": None,
         "date_published": None,
         "collections": None,
         "related": None,
     }
-    metadata["official_source"] = url
-
     page = get_url(url)
     soup = BeautifulSoup(page.text, "html.parser")
 
@@ -284,7 +282,7 @@ def fetch_metadata_f(url: str, entry_path: Path) -> Dict[str, str]:
                     str(l) for l in divs[0].contents
                 ).strip()
 
-    metadata["category"] = "manga" if metadata["magazines"] else "doujinshi"
+    metadata["category"] = "doujinshi" if "Doujin" in metadata["tags"] else "manga"
 
     collections = soup.select(
         "div[id$='/collections'] b > a:not([href^='/collections'])"
@@ -311,11 +309,17 @@ def fetch_metadata_f(url: str, entry_path: Path) -> Dict[str, str]:
     metadata["date_published"] = parsedate_to_datetime(
         thumbnail_img.headers["last-modified"]
     ).isoformat()
-    metadata["date_archived"] = datetime.fromtimestamp(
-        os.path.getmtime(
-            next(f for f in entry_path.iterdir() if f.suffix in IMAGE_SUFFIXES)
+    metadata["date_archived"] = (
+        datetime.fromtimestamp(
+            int(
+                os.path.getmtime(
+                    next(f for f in entry_path.iterdir() if f.suffix in IMAGE_SUFFIXES)
+                )
+            )
         )
-    ).isoformat()
+        .astimezone(pytz.utc)
+        .isoformat()
+    )
     return metadata
 
 
@@ -323,27 +327,23 @@ def fetch_metadata_i(url: str, entry_path: Path) -> Dict[str, str]:
     metadata = {
         "title": None,
         "artists": [],
-        "parodies": None,
+        "parodies": ["Original Work"],
         "circles": None,
         "events": None,
         "magazines": None,
-        "publishers": None,
+        "publishers": ["Irodori Comics"],
         "pages": 0,
         "direction": None,
         "description": None,
         "tags": [],
         "thumbnail_page": 1,
-        "category": None,
-        "official_source": None,
+        "category": "doujinshi",
+        "official_source": url,
         "date_archived": None,
         "date_published": None,
         "collections": None,
         "related": None,
     }
-    metadata["official_source"] = url
-    metadata["parodies"] = ["Original Work"]
-    metadata["publishers"] = ["Irodori Comics"]
-    metadata["category"] = "doujinshi"
 
     page = get_url(url)
     soup = BeautifulSoup(page.text, "html.parser")
@@ -389,47 +389,120 @@ def fetch_metadata_i(url: str, entry_path: Path) -> Dict[str, str]:
     return metadata
 
 
+def fetch_metadata_l(url: str, entry_path: Path) -> Union[Dict[str, str], None]:
+    metadata = {
+        "title": None,
+        "artists": [],
+        "parodies": None,
+        "circles": None,
+        "events": None,
+        "magazines": None,
+        "publishers": None,
+        "pages": 0,
+        "direction": None,
+        "description": None,
+        "tags": [],
+        "thumbnail_page": 1,
+        "category": None,
+        "official_source": url,
+        "date_archived": None,
+        "date_published": None,
+        "collections": None,
+        "related": None,
+    }
+
+    fallback_metadata = fallback_metadata_data.get(url, None)
+    if not fallback_metadata:
+        return None
+    metadata = {**metadata, **fallback_metadata}
+
+    metadata["date_archived"] = (
+        datetime.fromtimestamp(
+            int(
+                os.path.getmtime(
+                    next(f for f in entry_path.iterdir() if f.suffix in IMAGE_SUFFIXES)
+                )
+            )
+        )
+        .astimezone(pytz.utc)
+        .isoformat()
+    )
+    return metadata
+
+
+def write_metadata(metadata_json, metadata):
+    with metadata_json.open(mode="w", encoding="utf-8") as f:
+        json.dump(
+            obj=metadata,
+            fp=f,
+            indent=2,
+            ensure_ascii=False,
+            sort_keys=True,
+        )
+        f.write("\n")
+    db.insert(
+        {
+            **metadata,
+            "json_path": metadata_json.relative_to(data_dir).as_posix(),
+        }
+    )
+
+
 def fetch_all():
     global downloaded_data
     global index_data
     global original_sources_data
     for artist, entries in index_data.items():
         for entry, url in entries.items():
-            source_url = original_sources_data.get(url, None)
-            if not source_url:
-                source_url = search_entry(
-                    artist,
-                    clean_directory_name(downloaded_data[url]),
-                    clean_directory_name(entry),
-                )
-                if not source_url:
-                    log.error(f"could not find source for {artist}/{entry}")
-                    continue
-                log.info(f"found source for {artist}/{entry}   ---   {source_url}")
-                original_sources_data[url] = source_url
-                with original_sources_json.open("r+", encoding="utf-8") as f:
-                    original_sources_data = dict(
-                        sorted(original_sources_data.items(), key=lambda item: item[1])
-                    )
-                    f.seek(0)
-                    json.dump(
-                        obj=original_sources_data, fp=f, indent=2, ensure_ascii=False
-                    )
-                    f.write("\n")
-                    f.truncate()
-
             entry_path = data_dir / artist / entry
-            if source_url.startswith(F_BASE_URL):
-                pass
-                # metadata = fetch_metadata_f(source_url, entry_path)
-            elif source_url.startswith(I_BASE_URL):
-                pass
-                # metadata = fetch_metadata_i(source_url, entry_path)
-            elif source_url.startswith("https://exhentai.org/"):
-                pass
-                # make a local metadata provider? i dont wanna scrape that mfer
-            else:
-                raise Exception("unknown source type")
+            metadata_json = entry_path / "metadata.json"
+            if not metadata_json.exists():
+                log.info(f"no metadata.json for {artist}/{entry}")
+                source_url = original_sources_data.get(url, None)
+                if not source_url:
+                    log.info(f"searching source for {artist}/{entry}")
+                    source_url = search_entry(
+                        artist,
+                        clean_directory_name(downloaded_data[url]),
+                        clean_directory_name(entry),
+                    )
+                    if not source_url:
+                        log.error(f"could not find source for {artist}/{entry}")
+                        continue
+                    log.info(f"found source for {artist}/{entry}  --->  {source_url}")
+                    original_sources_data[url] = source_url
+                    with original_sources_json.open("r+", encoding="utf-8") as f:
+                        original_sources_data = dict(
+                            sorted(
+                                original_sources_data.items(), key=lambda item: item[1]
+                            )
+                        )
+                        f.seek(0)
+                        json.dump(
+                            obj=original_sources_data,
+                            fp=f,
+                            indent=2,
+                            ensure_ascii=False,
+                        )
+                        f.write("\n")
+                        f.truncate()
+
+                if source_url.startswith(F_BASE_URL):
+                    log.info(f"fetching f metadata for {source_url}")
+                    metadata = fetch_metadata_f(source_url, entry_path)
+                elif source_url.startswith(I_BASE_URL):
+                    log.info(f"fetching i metadata for {source_url}")
+                    metadata = fetch_metadata_i(source_url, entry_path)
+                else:
+                    log.info(f"fetching l metadata for {source_url}")
+                    metadata = fetch_metadata_l(source_url, entry_path)
+                if not metadata:
+                    log.error(f"could not find metadata for source: {source_url}")
+                    continue
+                log.info(
+                    f"successfully fetched metadata for {artist}/{entry} at {source_url}"
+                )
+                write_metadata(entry_path / "metadata.json", metadata)
 
 
 fetch_all()
