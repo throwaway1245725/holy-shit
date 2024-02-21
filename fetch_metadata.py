@@ -63,6 +63,7 @@ headers_dict = {
     "X-Requested-With": "XMLHttpRequest",
 }
 db = TinyDB("db.json", indent=2, ensure_ascii=False, sort_keys=True, encoding="utf-8")
+# db = TinyDB("db.json", ensure_ascii=False, encoding="utf-8")
 
 
 def do_slugify(s: str) -> str:
@@ -313,7 +314,11 @@ def fetch_metadata_f(url: str, entry_path: Path) -> Dict[str, str]:
         datetime.fromtimestamp(
             int(
                 os.path.getmtime(
-                    next(f for f in entry_path.iterdir() if f.suffix in IMAGE_SUFFIXES)
+                    next(
+                        file
+                        for suffix in IMAGE_SUFFIXES
+                        for file in entry_path.glob(f"**/*{suffix}")
+                    )
                 )
             )
         )
@@ -379,7 +384,11 @@ def fetch_metadata_i(url: str, entry_path: Path) -> Dict[str, str]:
         datetime.fromtimestamp(
             int(
                 os.path.getmtime(
-                    next(f for f in entry_path.iterdir() if f.suffix in IMAGE_SUFFIXES)
+                    next(
+                        file
+                        for suffix in IMAGE_SUFFIXES
+                        for file in entry_path.glob(f"**/*{suffix}")
+                    )
                 )
             )
         )
@@ -420,7 +429,11 @@ def fetch_metadata_l(url: str, entry_path: Path) -> Union[Dict[str, str], None]:
         datetime.fromtimestamp(
             int(
                 os.path.getmtime(
-                    next(f for f in entry_path.iterdir() if f.suffix in IMAGE_SUFFIXES)
+                    next(
+                        file
+                        for suffix in IMAGE_SUFFIXES
+                        for file in entry_path.glob(f"**/*{suffix}")
+                    )
                 )
             )
         )
