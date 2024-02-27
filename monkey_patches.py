@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Callable, Dict, Mapping
+from typing import Callable, Dict, Mapping, Union
 
 from tinydb.table import Table
 from undetected_chromedriver import patcher
@@ -29,7 +29,7 @@ def patch_undetected_chromedriver():
         zip_path = Path(self.data_path) / zip_name
         if zip_path.is_file():
             patcher.logger.debug("cached chromedriver detected %s" % zip_path)
-            return zip_path.absolute()
+            return str(zip_path.absolute())
         patcher.logger.debug("downloading from %s" % download_url)
         return patcher.urlretrieve(download_url)[0]
 
