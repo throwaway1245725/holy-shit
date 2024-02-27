@@ -5,6 +5,10 @@ from pathlib import Path
 from time import sleep
 from typing import Any, Callable, Tuple, Union
 
+from monkey_patches import patch_undetected_chromedriver
+
+patch_undetected_chromedriver()
+
 import undetected_chromedriver as uc
 from dotenv import load_dotenv
 from selenium.common.exceptions import StaleElementReferenceException, TimeoutException

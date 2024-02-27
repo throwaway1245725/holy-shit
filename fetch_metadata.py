@@ -9,6 +9,10 @@ from pathlib import Path
 from typing import Any, Dict, Union
 from urllib.parse import urljoin, urlparse
 
+from monkey_patches import patch_tinydb
+
+patch_tinydb()
+
 import pytz
 import requests
 from bs4 import BeautifulSoup
@@ -138,7 +142,9 @@ def get_thumbnail_page(url: str) -> int:
 
 def suggest_f(artist: str, title: str) -> Union[str, None]:
     response = get_url(f"{F_BASE_URL}/suggest/{artist} {title}")
-    suggestions = [s for s in response.json() if s["link"].startswith("/hentai/")]
+    suggestions = [
+        s for s in response.json()["results"] if s["link"].startswith("/hentai/")
+    ]
 
     matching_title = next(
         (
