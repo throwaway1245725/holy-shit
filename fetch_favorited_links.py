@@ -10,6 +10,8 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support import expected_conditions
 
+os.environ["CAPTCHA"] = "false"
+
 from browser_setup import BASE_URL, get_url, wait_for_condition
 from log_setup import log
 
