@@ -147,7 +147,7 @@ def get_downloaded_filename(url: str, archive_name: str):
     else:
         while not source_archive_path.exists():
             sleep(0.1)
-        sleep(0.3)
+        sleep(0.6)
         source_archive_path.rename(dest_archive_path)
         write_to_downloaded_json(url, archive_name)
     browser.close()
