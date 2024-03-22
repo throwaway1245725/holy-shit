@@ -1,3 +1,4 @@
+import shutil
 from pathlib import Path
 from typing import Callable, Dict, Mapping, Union
 
@@ -27,8 +28,10 @@ def patch_undetected_chromedriver():
             download_url %= (self.version_full.vstring, self.platform_name, zip_name)
 
         zip_path = Path(self.data_path) / zip_name
-        if zip_path.is_file():
-            patcher.logger.debug("cached chromedriver detected %s" % zip_path)
+        cached_zip_path = zip_path.with_name(f"cached-{zip_path.name}")
+        if cached_zip_path.is_file():
+            patcher.logger.debug("cached chromedriver detected %s" % cached_zip_path)
+            shutil.copyfile(cached_zip_path, zip_path)
             return str(zip_path.absolute())
         patcher.logger.debug("downloading from %s" % download_url)
         return patcher.urlretrieve(download_url)[0]
