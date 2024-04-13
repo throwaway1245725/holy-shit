@@ -467,6 +467,23 @@ def write_metadata(metadata_json, metadata):
     )
 
 
+def write_original_sources():
+    global original_sources_data
+    with original_sources_json.open("r+", encoding="utf-8") as f:
+        original_sources_data = dict(
+            sorted(original_sources_data.items(), key=lambda item: item[1])
+        )
+        f.seek(0)
+        json.dump(
+            obj=original_sources_data,
+            fp=f,
+            indent=2,
+            ensure_ascii=False,
+        )
+        f.write("\n")
+        f.truncate()
+
+
 def fetch_all():
     global downloaded_data
     global index_data
@@ -490,21 +507,7 @@ def fetch_all():
                         continue
                     log.info(f"found source for {artist}/{entry}  --->  {source_url}")
                     original_sources_data[url] = source_url
-                    with original_sources_json.open("r+", encoding="utf-8") as f:
-                        original_sources_data = dict(
-                            sorted(
-                                original_sources_data.items(), key=lambda item: item[1]
-                            )
-                        )
-                        f.seek(0)
-                        json.dump(
-                            obj=original_sources_data,
-                            fp=f,
-                            indent=2,
-                            ensure_ascii=False,
-                        )
-                        f.write("\n")
-                        f.truncate()
+                    write_original_sources()
 
                 if source_url.startswith(F_BASE_URL):
                     log.info(f"fetching f metadata for {source_url}")
@@ -525,3 +528,4 @@ def fetch_all():
 
 
 fetch_all()
+write_original_sources()
