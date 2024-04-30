@@ -142,6 +142,9 @@ def get_thumbnail_page(url: str) -> int:
 
 def suggest_f(artist: str, title: str) -> Union[str, None]:
     response = get_url(f"{F_BASE_URL}/suggest/{artist} {title}")
+    if not response.ok:
+        return None
+
     suggestions = [
         s for s in response.json()["results"] if s["link"].startswith("/hentai/")
     ]
