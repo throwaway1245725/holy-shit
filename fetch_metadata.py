@@ -371,10 +371,13 @@ def fetch_metadata_i(url: str, entry_path: Path) -> Dict[str, str]:
         for artist in right_container.select(".product-manufacturer a")
     ]
     metadata["pages"] = int(right_container.select(".product-upc span")[0].text.strip())
-    metadata["description"] = "\n".join(
-        str(l)
-        for l in right_container.select(".product_extra .block-content")[0].contents
-    ).strip()
+    try:
+        metadata["description"] = "\n".join(
+            str(l)
+            for l in right_container.select(".product_extra .block-content")[0].contents
+        ).strip()
+    except IndexError:
+        log.info(f"no description found for {entry_path} at {url}")
     metadata["tags"] = [
         tag.text.strip()
         for tag in right_container.select(".tags a")
