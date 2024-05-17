@@ -51,14 +51,14 @@ def program_exit():
 
 def init_browser():
     options = uc.ChromeOptions()
-    options.add_argument("--disable-web-security")
+    # options.add_argument("--disable-web-security")
     new_browser = uc.Chrome(
         user_data_dir=BROWSER_DATA_DIR,
         headless=HEADLESS,
         options=options,
         patcher_force_close=True,
         enable_cdp_events=True,
-        version_main=121,
+        version_main=125,
     )
     new_browser.set_script_timeout(TIMEOUT)
     new_browser.set_page_load_timeout(TIMEOUT)
@@ -128,17 +128,18 @@ def do_while_wait_for_condition(
     return elm_found
 
 
-def set_cookies(browser: uc.Chrome):
+def set_cookies_and_localstorage(browser: uc.Chrome):
     get_url(BASE_URL)
     wait_for_condition(
         expected_conditions.presence_of_element_located((By.CSS_SELECTOR, "#main")),
         "#main",
     )
+    browser.execute_script("window.localStorage.setItem('filter','[]');")
     for cookie_dict in cookie_dicts:
         browser.add_cookie(cookie_dict)
 
 
-set_cookies(browser)
+set_cookies_and_localstorage(browser)
 
 
 def text_not_empty_in_element(locator: Tuple[str, str]):
