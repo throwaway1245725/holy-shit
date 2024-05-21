@@ -1,9 +1,10 @@
+import json
 import logging
 import os
 import sys
 from pathlib import Path
 from time import sleep
-from typing import Any, Callable, Tuple, Union
+from typing import Any, Callable, Dict, Tuple, Union
 
 from monkey_patches import patch_undetected_chromedriver
 
@@ -30,6 +31,7 @@ if CAPTCHA:
     HEADLESS = False
 
 cookies_txt = Path.cwd() / "a_cookies.txt"
+localstorage_json = Path.cwd() / "a_localstorage.json"
 
 with cookies_txt.open("r") as f:
     cookies_str = f.read()
@@ -40,6 +42,9 @@ with cookies_txt.open("r") as f:
         }
         for cookie in cookies_str.split("; ")
     ]
+
+with localstorage_json.open("r") as f:
+    localstorage_dict: Dict[str, str] = json.load(f)
 
 
 def program_exit():
@@ -135,6 +140,9 @@ def set_cookies_and_localstorage(browser: uc.Chrome):
         "#main",
     )
     browser.execute_script("window.localStorage.setItem('filter','[]');")
+    for item, value in localstorage_dict.items():
+        browser.execute_script(f"window.localStorage.setItem('{item}', '{value}')")
+
     for cookie_dict in cookie_dicts:
         browser.add_cookie(cookie_dict)
 
