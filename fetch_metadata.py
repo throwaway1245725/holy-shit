@@ -61,6 +61,7 @@ with cookies_txt.open("r") as f:
     cookies_dict = {
         cookie.split("=")[0]: cookie.split("=")[1] for cookie in cookies_str.split("; ")
     }
+    cookies_dict["_rps"] = "1"
 
 headers_dict = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
@@ -389,9 +390,9 @@ def fetch_metadata_i(url: str, entry_path: Path) -> Dict[str, str]:
         thumbnail_url = thumbnail_url[0]
 
     thumbnail_img = get_url(thumbnail_url)
-    metadata["date_published"] = parsedate_to_datetime(
-        thumbnail_img.headers["last-modified"]
-    ).isoformat()
+    # metadata["date_published"] = parsedate_to_datetime(
+    #     thumbnail_img.headers["last-modified"]
+    # ).isoformat()
     metadata["date_archived"] = (
         datetime.fromtimestamp(
             int(
