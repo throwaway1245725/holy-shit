@@ -9,6 +9,9 @@ from pathlib import Path
 from typing import Any, Dict, Union
 from urllib.parse import urljoin, urlparse
 
+from tinydb import TinyDB
+
+from log_setup import log
 from monkey_patches import patch_tinydb
 
 patch_tinydb()
@@ -17,9 +20,6 @@ import pytz
 import requests
 from bs4 import BeautifulSoup
 from slugify import slugify
-from tinydb import TinyDB
-
-from log_setup import log
 
 F_BASE_URL = os.getenv("F_BASE_URL", "")
 I_BASE_URL = os.getenv("I_BASE_URL", "")
@@ -268,7 +268,9 @@ def fetch_metadata_f(url: str, entry_path: Path) -> Dict[str, str]:
         "div[class^='block md:table-cell relative w-full align-top']"
     )[0]
     metadata["title"] = right_container.h1.text.strip()
-    for row in right_container.find_all("div", attrs={"class": "table"}, recursive=False):
+    for row in right_container.find_all(
+        "div", attrs={"class": "table"}, recursive=False
+    ):
         divs = row.find_all("div", recursive=False)
         if len(divs) == 2:
             key = divs[0].text.strip()

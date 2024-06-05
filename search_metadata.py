@@ -3,8 +3,15 @@ from pathlib import Path
 
 from tinydb import Query, TinyDB
 
+from log_setup import log
+from monkey_patches import patch_tinydb
+
+patch_tinydb()
+
+
 db = TinyDB("db.json", indent=2, ensure_ascii=False, sort_keys=True, encoding="utf-8")
 data_dir = Path.cwd() / "data"
+
 
 # https://tinydb.readthedocs.io/en/latest/usage.html
 
@@ -26,10 +33,12 @@ def check_db_file():
 
     all_metadata_files = list(data_dir.glob("**/metadata.json"))
     if len(db) != len(all_metadata_files):
+        log.info("cleaning db")
         db.drop_tables()
         db.insert_multiple(map(fetch_metadata, all_metadata_files))
+        log.info("db cleaned")
 
 
 print("oh")
 
-# check_db_file()
+check_db_file()

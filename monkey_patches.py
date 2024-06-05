@@ -81,7 +81,7 @@ def patch_tinydb():
         # Convert the document IDs back to strings.
         # This is required as some storages (most notably the JSON file format)
         # don't support IDs other than strings.
-        tables[self.name] = {int(doc_id): doc for doc_id, doc in table.items()}
+        tables[self.name] = {f"{int(doc_id):05}": doc for doc_id, doc in table.items()}
 
         # Write the newly updated data back to the storage
         self._storage.write(tables)
