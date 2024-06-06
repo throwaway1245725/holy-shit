@@ -169,7 +169,7 @@ def search_f(artist: str, title: str) -> Union[str, None]:
     page = get_url(f"{F_BASE_URL}/search/{artist} {title}")
     soup = BeautifulSoup(page.text, "html.parser")
     for entry in soup.select("div[id^='content-']"):
-        entry_title = entry.select("a.text-md")[0]
+        entry_title = entry.select("a.text-base[title]:not([title=''])")[0]
         if do_slugify(entry_title.text.strip()) == do_slugify(title):
             for entry_artist in entry.select("a.text-sm"):
                 if do_slugify(entry_artist.text.strip()) == do_slugify(artist):
