@@ -50,6 +50,7 @@ with cookies_txt.open("r") as f:
     cookies_dict = {
         cookie.split("=")[0]: cookie.split("=")[1] for cookie in cookies_str.split("; ")
     }
+
 db = TinyDB("db.json", indent=2, ensure_ascii=False, sort_keys=True, encoding="utf-8")
 
 

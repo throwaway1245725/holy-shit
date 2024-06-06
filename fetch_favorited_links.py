@@ -1,57 +1,60 @@
 import json
-import logging
 import os
-import re
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict
 
+import requests
+from bs4 import BeautifulSoup, Tag
 from dotenv import load_dotenv
-from selenium.webdriver.common.by import By
-from selenium.webdriver.remote.webelement import WebElement
-from selenium.webdriver.support import expected_conditions
 
-os.environ["CAPTCHA"] = "true"
-
-from browser_setup import BASE_URL, get_url, wait_for_condition
 from log_setup import log
 
 load_dotenv()
 
+HN_BASE_URL = os.getenv("HN_BASE_URL", "")
 IGNORE_ALREADY_PROCESSED = (
     os.getenv("IGNORE_ALREADY_PROCESSED", "true").lower() == "true"
 )
 
 favorited_json = Path.cwd() / "favorited.json"
 
+cookies_txt = Path.cwd() / "hn_cookies.txt"
+with cookies_txt.open("r") as f:
+    cookies_str = f.read()
+    cookies_dict = {
+        cookie.split("=")[0]: cookie.split("=")[1] for cookie in cookies_str.split("; ")
+    }
 
-def parse_favorite_page(page: int) -> bool:
-    FAVORITE_ARTICLE_SELECTOR = "#main > .feed > main > article"
-    get_url(f"{BASE_URL}/favorites?page={page}")
-    articles: List[WebElement] = wait_for_condition(
-        expected_conditions.presence_of_all_elements_located(
-            (By.CSS_SELECTOR, FAVORITE_ARTICLE_SELECTOR)
-        ),
-        "FAVORITE_ARTICLE_SELECTOR",
-    )
+
+def get_url(url: str) -> requests.Response:
+    return requests.get(url, cookies=cookies_dict)
+
+
+def get_artist(url: str) -> str:
+    page = get_url(url)
+    soup = BeautifulSoup(page.text, "html.parser")
+    artist_el = soup.select("table.view-page-details a[href^='/?q=artist:']", limit=1)[
+        0
+    ]
+    return artist_el.find(text=True, recursive=False).strip()  # type: ignore
+
+
+def parse_favorite_page(page_num: int) -> bool:
+    FAVORITE_CARD_SELECTOR = "a[href^='/view/'] > .card"
+    page = get_url(f"{HN_BASE_URL}/favorites/page/{page_num}")
+    soup = BeautifulSoup(page.text, "html.parser")
     with favorited_json.open("r+", encoding="utf-8") as f:
         favorited_data: Dict[str, str] = json.load(f)
         reached_already_processed = False
-        for article in articles:
-            a = article.find_element(By.TAG_NAME, "a")
-            link = a.get_attribute("href")
-            artists = article.find_elements(
-                By.CSS_SELECTOR, 'div a[data-namespace="1"]'
-            )
-            if link:
-                if link not in favorited_data.keys():
-                    favorited_data[link] = (
-                        f"!<not yet downloaded> {artists[0].accessible_name}/{a.accessible_name}"
-                        if artists
-                        else f"!<not yet downloaded> unknown/{a.accessible_name}"
-                    )
-                else:
-                    reached_already_processed = True
-                    break
+        for entry in soup.select(FAVORITE_CARD_SELECTOR):
+            link: str = f"{HN_BASE_URL}{entry.parent['href']}"  # type: ignore
+            title: str = entry.header.p.text  # type: ignore
+            if link not in favorited_data.keys():
+                artist = get_artist(link)
+                favorited_data[link] = f"!<not yet downloaded> [{artist}] {title}"
+            else:
+                reached_already_processed = True
+                break
 
         favorited_data = dict(sorted(favorited_data.items(), key=lambda item: item[1]))
         f.seek(0)
@@ -62,27 +65,13 @@ def parse_favorite_page(page: int) -> bool:
 
 
 def get_favorites():
-    PAGE_PATTERN = re.compile(r".*\/favorites\?page=(\d+)")
-    LAST_PAGE_SELECTOR = "#main > .feed > footer > nav > a[title*='last page']"
-    get_url(f"{BASE_URL}/favorites")
-    last_page_btn: WebElement = wait_for_condition(
-        expected_conditions.presence_of_element_located(
-            (By.CSS_SELECTOR, LAST_PAGE_SELECTOR)
-        ),
-        "LAST_PAGE_SELECTOR",
-    )
-    last_page_link = last_page_btn.get_attribute("href")
-    if (
-        not last_page_link
-        or not (m := PAGE_PATTERN.match(last_page_link))
-        or not m.group(1)
-    ):
-        raise Exception("can't find last page button")
-    n_pages: str = m.group(1)
-
-    for page in range(1, int(n_pages) + 1):
-        log.info(f"parsing page: {page}")
-        reached_already_processed = parse_favorite_page(page)
+    LAST_PAGE_SELECTOR = "ul.pagination-list li:last-child"
+    page = get_url(f"{HN_BASE_URL}/favorites")
+    soup = BeautifulSoup(page.text, "html.parser")
+    last_page_num: str = soup.select(LAST_PAGE_SELECTOR, limit=1)[0].a.text  # type: ignore
+    for page_num in range(1, int(last_page_num) + 1):
+        log.info(f"parsing page: {page_num}")
+        reached_already_processed = parse_favorite_page(page_num)
         if reached_already_processed:
             log.info("reached already processed, stopping")
             break
