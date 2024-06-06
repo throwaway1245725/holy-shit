@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Dict
 
 import requests
-from bs4 import BeautifulSoup, Tag
+from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 
 from log_setup import log
@@ -36,7 +36,7 @@ def get_artist(url: str) -> str:
     artist_el = soup.select("table.view-page-details a[href^='/?q=artist:']", limit=1)[
         0
     ]
-    return artist_el.find(text=True, recursive=False).strip()  # type: ignore
+    return artist_el.find(string=True, recursive=False).strip()  # type: ignore
 
 
 def parse_favorite_page(page_num: int) -> bool:
