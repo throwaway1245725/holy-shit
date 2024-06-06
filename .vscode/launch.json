@@ -13,22 +13,6 @@
       "justMyCode": false
     },
     {
-      "name": "fetch_favorited_links.py",
-      "type": "debugpy",
-      "request": "launch",
-      "program": "./fetch_favorited_links.py",
-      "console": "integratedTerminal",
-      "justMyCode": false
-    },
-    {
-      "name": "download_all_favorites.py",
-      "type": "debugpy",
-      "request": "launch",
-      "program": "./download_all_favorites.py",
-      "console": "integratedTerminal",
-      "justMyCode": false
-    },
-    {
       "name": "process_downloaded.py",
       "type": "debugpy",
       "request": "launch",
