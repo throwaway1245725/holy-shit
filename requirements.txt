@@ -10,4 +10,5 @@ pyyaml
 requests
 selenium-interceptor
 tinydb
+tqdm
 undetected_chromedriver

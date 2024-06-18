@@ -21,10 +21,10 @@
       "justMyCode": false
     },
     {
-      "name": "match_favorited_downloaded.py",
+      "name": "download_favorited.py",
       "type": "debugpy",
       "request": "launch",
-      "program": "./match_favorited_downloaded.py",
+      "program": "./download_favorited.py",
       "console": "integratedTerminal",
       "justMyCode": false
     },
