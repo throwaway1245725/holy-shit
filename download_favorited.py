@@ -60,7 +60,7 @@ def download_all_favorites():
         with downloaded_json.open("r", encoding="utf-8") as f:
             downloaded_data: Dict[str, str] = json.load(f)
         if not url in downloaded_data.keys():
-            log.warning(f"downloading favorite: '{url} : {path}'")
+            log.info(f"downloading favorite: '{url} : {path}'")
             download_archive(url)
 
 
