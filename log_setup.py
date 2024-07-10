@@ -1,20 +1,14 @@
 import logging
 import os
 import sys
-from pathlib import Path
-from time import sleep
-from typing import Any, Callable, Tuple, Union
 
-import undetected_chromedriver as uc
 from dotenv import load_dotenv
-from selenium.common.exceptions import StaleElementReferenceException, TimeoutException
-from selenium.webdriver.common.by import By
-from selenium.webdriver.remote.webelement import WebElement
-from selenium.webdriver.support import expected_conditions
-from selenium.webdriver.support.wait import WebDriverWait
+
+load_dotenv()
+LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 
 log = logging.getLogger()
-log.setLevel(logging.INFO)
+log.setLevel(logging.getLevelNamesMapping()[LOG_LEVEL])
 logging.getLogger("urllib3").setLevel(logging.ERROR)
 handler = logging.StreamHandler(sys.stdout)
 formatter = logging.Formatter(

@@ -12,3 +12,4 @@ selenium-interceptor
 tinydb
 tqdm
 undetected_chromedriver
+setuptools
