@@ -61,7 +61,7 @@ def get_favorites():
     page = get_url(f"{K_API_URL}/favorites")
     page_data = page.json()
     num_pages: int = math.ceil(page_data["total"] / page_data["limit"])
-    for page_num in range(num_pages, 1, -1):
+    for page_num in range(1, num_pages):
         log.info(f"parsing page: {page_num}")
         reached_already_processed = parse_favorite_page(page_num)
         if IGNORE_ALREADY_PROCESSED and reached_already_processed:
