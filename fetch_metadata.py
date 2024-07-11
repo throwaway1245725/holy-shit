@@ -6,34 +6,24 @@ import re
 from datetime import datetime
 from email.utils import parsedate_to_datetime
 from pathlib import Path
-from typing import Any, Dict, Union
+from typing import Any
 from urllib.parse import urljoin, urlparse
 
+import pytz
+import requests
+from bs4 import BeautifulSoup
+from dotenv import load_dotenv
+from slugify import slugify
 from tinydb import TinyDB
 
 from log_setup import log
 from monkey_patches import patch_tinydb
 
 patch_tinydb()
-
-import pytz
-import requests
-from bs4 import BeautifulSoup
-from slugify import slugify
+load_dotenv()
 
 F_BASE_URL = os.getenv("F_BASE_URL", "")
 I_BASE_URL = os.getenv("I_BASE_URL", "")
-F_MULTI_KEYS_MAPPING = {
-    "Artist": "artists",
-    "Parody": "parodies",
-    "Circle": "circles",
-    "Event": "events",
-    "Magazine": "magazines",
-    "Publisher": "publishers",
-}
-ANCHIRA_SEQ_PATTERN = re.compile(r".*\/g\/(\d+)\/.*")
-PAGES_PATTERN = re.compile(r".*?(\d+) pages?.*")
-THUMBNAIL_PAGE_PATTERN = re.compile(r".*\/thumbs\/(\d+)\.thumb.*")
 IMAGE_SUFFIXES = [".jpg", ".jpeg", ".png"]
 
 
@@ -41,19 +31,19 @@ data_dir = Path.cwd() / "data"
 
 downloaded_json = Path.cwd() / "downloaded.json"
 with downloaded_json.open(mode="r", encoding="utf-8") as f:
-    downloaded_data: Dict[str, str] = json.load(f)
+    downloaded_data: dict[str, str] = json.load(f)
 
 index_json = Path.cwd() / "index.json"
 with index_json.open(mode="r", encoding="utf-8") as f:
-    index_data: Dict[str, Dict[str, str]] = json.load(f)
+    index_data: dict[str, dict[str, str]] = json.load(f)
 
 original_sources_json = Path.cwd() / "original_sources.json"
 with original_sources_json.open(mode="r", encoding="utf-8") as f:
-    original_sources_data: Dict[str, str] = json.load(f)
+    original_sources_data: dict[str, str] = json.load(f)
 
 fallback_metadata_json = Path.cwd() / "fallback_metadata.json"
 with fallback_metadata_json.open(mode="r", encoding="utf-8") as f:
-    fallback_metadata_data: Dict[str, Dict[str, Any]] = json.load(f)
+    fallback_metadata_data: dict[str, dict[str, Any]] = json.load(f)
 
 cookies_txt = Path.cwd() / "f_cookies.txt"
 with cookies_txt.open("r") as f:
@@ -114,6 +104,7 @@ def get_url(url: str) -> requests.Response:
 
 
 def get_thumbnail_page(url: str) -> int:
+    THUMBNAIL_PAGE_PATTERN = re.compile(r".*\/thumbs\/(\d+)\.thumb.*")
     return int(THUMBNAIL_PAGE_PATTERN.match(url).group(1))
 
 
@@ -141,7 +132,7 @@ def get_thumbnail_page(url: str) -> int:
 #         return False
 
 
-def suggest_f(artist: str, title: str) -> Union[str, None]:
+def suggest_f(artist: str, title: str) -> str | None:
     response = get_url(f"{F_BASE_URL}/suggest/{artist} {title}")
     if not response.ok:
         return None
@@ -165,7 +156,7 @@ def suggest_f(artist: str, title: str) -> Union[str, None]:
     return None
 
 
-def search_f(artist: str, title: str) -> Union[str, None]:
+def search_f(artist: str, title: str) -> str | None:
     page = get_url(f"{F_BASE_URL}/search/{artist} {title}")
     soup = BeautifulSoup(page.text, "html.parser")
     for entry in soup.select("div[id^='content-']"):
@@ -180,7 +171,7 @@ def search_f(artist: str, title: str) -> Union[str, None]:
     return None
 
 
-def suggest_i(artist: str, title: str) -> Union[str, None]:
+def suggest_i(artist: str, title: str) -> str | None:
     response_title = get_url(
         f"{I_BASE_URL}/index.php?route=extension/module/me_ajax_search/search&search={title}"
     )
@@ -205,7 +196,7 @@ def suggest_i(artist: str, title: str) -> Union[str, None]:
     return None
 
 
-def search_i(artist: str, title: str) -> Union[str, None]:
+def search_i(artist: str, title: str) -> str | None:
     page = get_url(f"{I_BASE_URL}/index.php?route=product/search&search={title}")
     soup = BeautifulSoup(page.text, "html.parser")
 
@@ -222,9 +213,7 @@ def search_i(artist: str, title: str) -> Union[str, None]:
     return None
 
 
-def search_entry(
-    artist: str, download_title: str, index_title: str
-) -> Union[str, None]:
+def search_entry(artist: str, download_title: str, index_title: str) -> str | None:
     search_fns = [suggest_f, search_f, suggest_i, search_i]
     for search_fn in search_fns:
         if url := search_fn(artist, download_title):
@@ -240,7 +229,17 @@ def search_entry(
     return None
 
 
-def fetch_metadata_f(url: str, entry_path: Path) -> Dict[str, str]:
+def fetch_metadata_f(url: str, entry_path: Path) -> dict[str, str]:
+    F_MULTI_KEYS_MAPPING = {
+        "Artist": "artists",
+        "Parody": "parodies",
+        "Circle": "circles",
+        "Event": "events",
+        "Magazine": "magazines",
+        "Publisher": "publishers",
+    }
+    PAGES_PATTERN = re.compile(r".*?(\d+) pages?.*")
+
     metadata = {
         "title": None,
         "artists": [],
@@ -340,7 +339,7 @@ def fetch_metadata_f(url: str, entry_path: Path) -> Dict[str, str]:
     return metadata
 
 
-def fetch_metadata_i(url: str, entry_path: Path) -> Dict[str, str]:
+def fetch_metadata_i(url: str, entry_path: Path) -> dict[str, str]:
     metadata = {
         "title": None,
         "artists": [],
@@ -413,7 +412,7 @@ def fetch_metadata_i(url: str, entry_path: Path) -> Dict[str, str]:
     return metadata
 
 
-def fetch_metadata_l(url: str, entry_path: Path) -> Union[Dict[str, str], None]:
+def fetch_metadata_l(url: str, entry_path: Path) -> dict[str, str] | None:
     metadata = {
         "title": None,
         "artists": [],
@@ -536,5 +535,10 @@ def fetch_all():
                 write_metadata(entry_path / "metadata.json", metadata)
 
 
-fetch_all()
-write_original_sources()
+def main():
+    fetch_all()
+    write_original_sources()
+
+
+if __name__ == "__main__":
+    main()

@@ -13,34 +13,50 @@
       "justMyCode": false
     },
     {
-      "name": "fetch_favorited_links.py",
+      "name": "hn/fetch_favorited_links",
       "type": "debugpy",
       "request": "launch",
-      "program": "./fetch_favorited_links.py",
+      "program": "${worspaceFolder}/hn/fetch_favorited_links.py",
       "console": "integratedTerminal",
       "justMyCode": false
     },
     {
-      "name": "download_favorited.py",
+      "name": "hn/download_favorited",
       "type": "debugpy",
       "request": "launch",
-      "program": "./download_favorited.py",
+      "program": "${worspaceFolder}/hn/download_favorited.py",
       "console": "integratedTerminal",
       "justMyCode": false
     },
     {
-      "name": "process_downloaded.py",
+      "name": "k/fetch_favorited_links",
       "type": "debugpy",
       "request": "launch",
-      "program": "./process_downloaded.py",
+      "program": "${worspaceFolder}/k/fetch_favorited_links.py",
       "console": "integratedTerminal",
       "justMyCode": false
     },
     {
-      "name": "clean_favorited.py",
+      "name": "k/download_favorited",
       "type": "debugpy",
       "request": "launch",
-      "program": "./clean_favorited.py",
+      "program": "${worspaceFolder}/k/download_favorited.py",
+      "console": "integratedTerminal",
+      "justMyCode": false
+    },
+    {
+      "name": "process_downloaded",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${worspaceFolder}/process_downloaded.py",
+      "console": "integratedTerminal",
+      "justMyCode": false
+    },
+    {
+      "name": "clean_favorited",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${worspaceFolder}/clean_favorited.py",
       "console": "integratedTerminal",
       "justMyCode": false
     },
@@ -48,7 +64,7 @@
       "name": "fetch_metadata.py",
       "type": "debugpy",
       "request": "launch",
-      "program": "./fetch_metadata.py",
+      "program": "${worspaceFolder}/fetch_metadata.py",
       "console": "integratedTerminal",
       "justMyCode": false
     },
@@ -56,7 +72,7 @@
       "name": "search_metadata.py",
       "type": "debugpy",
       "request": "launch",
-      "program": "./search_metadata.py",
+      "program": "${worspaceFolder}/search_metadata.py",
       "console": "integratedTerminal",
       "justMyCode": false
     },
@@ -64,7 +80,7 @@
       "name": "random_entry.py",
       "type": "debugpy",
       "request": "launch",
-      "program": "./random_entry.py",
+      "program": "${worspaceFolder}/random_entry.py",
       "console": "integratedTerminal",
       "justMyCode": false
     }

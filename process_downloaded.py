@@ -3,7 +3,6 @@ import re
 import shutil
 import zipfile
 from pathlib import Path
-from typing import Dict, List, Set, Tuple, Union
 
 from log_setup import log
 
@@ -12,16 +11,16 @@ downloaded_dir = Path.cwd() / "downloaded"
 downloaded_json = Path.cwd() / "downloaded.json"
 index_json = Path.cwd() / "index.json"
 with index_json.open(mode="r", encoding="utf-8") as f:
-    index_data: Dict[str, Dict[str, str]] = json.load(f)
+    index_data: dict[str, dict[str, str]] = json.load(f)
 with downloaded_json.open(mode="r", encoding="utf-8") as f:
-    downloaded_data: Dict[str, str] = json.load(f)
+    downloaded_data: dict[str, str] = json.load(f)
 
 
 def add_rename_path(
     source: Path,
     new_name: str,
-    paths_to_move_source: Dict[Path, Path],
-    conflicts: List[Tuple[Path, Path]],
+    paths_to_move_source: dict[Path, Path],
+    conflicts: list[tuple[Path, Path]],
 ):
     new_path = source.with_name(new_name)
     if new_path in paths_to_move_source:
@@ -30,8 +29,8 @@ def add_rename_path(
 
 
 def do_move(
-    paths_to_move_source: Dict[Path, Path],
-    conflicts: List[Tuple[Path, Path]],
+    paths_to_move_source: dict[Path, Path],
+    conflicts: list[tuple[Path, Path]],
     type: str,
 ):
     if paths_to_move_source:
@@ -139,8 +138,8 @@ def rename_and_add_entries():
 def clean_entries():
     log.info("========== cleaning entries ==========")
 
-    entries_to_move_source: Dict[Path, Path] = {}
-    conflicts: List[Tuple[Path, Path]] = []
+    entries_to_move_source: dict[Path, Path] = {}
+    conflicts: list[tuple[Path, Path]] = []
 
     for artist in data_dir.iterdir():
         for entry in artist.iterdir():
@@ -177,19 +176,19 @@ def clean_filenames():
         "wtf_is_that": re.compile(r"_3200x_(?P<page1>\d+)$"),
     }
 
-    matches: Dict[str, Set[Tuple[Path, re.Match]]] = {
+    matches: dict[str, set[tuple[Path, re.Match]]] = {
         key: set() for key in PATTERNS.keys()
     }
 
-    pages_to_move_source: Dict[Path, Path] = {}
-    conflicts: List[Tuple[Path, Path]] = []
+    pages_to_move_source: dict[Path, Path] = {}
+    conflicts: list[tuple[Path, Path]] = []
 
     def generate_name(
         max_int_length: int,
         file_suffix: str,
         page1: str,
-        page2: Union[str, None] = None,
-        suffix: Union[str, None] = None,
+        page2: str | None = None,
+        suffix: str | None = None,
     ) -> str:
         if page2:
             if suffix:
@@ -201,13 +200,13 @@ def clean_filenames():
         else:
             return f"{int(page1):0{max_int_length}}{file_suffix}"
 
-    def get_max_int_len(entry_matches: Set[Tuple[Path, re.Match]]):
+    def get_max_int_len(entry_matches: set[tuple[Path, re.Match]]):
         return max(
             2, *(len(m.group("page1").lstrip("0")) for (_page, m) in entry_matches)
         )
 
     def clean_standard(
-        entry_matches: Set[Tuple[Path, re.Match]], is_fakku: bool = False
+        entry_matches: set[tuple[Path, re.Match]], is_fakku: bool = False
     ):
         max_int_length = get_max_int_len(entry_matches)
 
@@ -232,10 +231,10 @@ def clean_filenames():
                     conflicts=conflicts,
                 )
 
-    def clean_fakku(entry_matches: Set[Tuple[Path, re.Match]]):
+    def clean_fakku(entry_matches: set[tuple[Path, re.Match]]):
         clean_standard(entry_matches, is_fakku=True)
 
-    def clean_simple(entry_matches: Set[Tuple[Path, re.Match]]):
+    def clean_simple(entry_matches: set[tuple[Path, re.Match]]):
         max_int_length = get_max_int_len(entry_matches)
 
         for page, m in entry_matches:
@@ -265,8 +264,8 @@ def clean_filenames():
     }
 
     def process_entry(entry: Path):
-        entry_matches: Set[Tuple[Path, re.Match]] = set()
-        matched_pattern_name: Union[str, None] = None
+        entry_matches: set[tuple[Path, re.Match]] = set()
+        matched_pattern_name: str | None = None
 
         def check_match(pattern_name: str, page: Path):
             nonlocal matches
@@ -333,7 +332,7 @@ def check_multi_entries():
 def check_missing_entries():
     log.info("========== checking for missing entries ==========")
     with index_json.open(mode="r", encoding="utf-8") as f:
-        index_data: Dict[str, Dict[str, str]] = json.load(f)
+        index_data: dict[str, dict[str, str]] = json.load(f)
     index_entries = set(
         f"{artist}/{entry}"
         for artist, entries in index_data.items()
@@ -366,10 +365,15 @@ def check_missing_entries():
         log.info("no missing entries detected")
 
 
-copy_indexed_archives_to_data_dir()
-unzip_all()
-rename_and_add_entries()
-clean_entries()
-clean_filenames()
-check_multi_entries()
-check_missing_entries()
+def main():
+    copy_indexed_archives_to_data_dir()
+    unzip_all()
+    rename_and_add_entries()
+    clean_entries()
+    clean_filenames()
+    check_multi_entries()
+    check_missing_entries()
+
+
+if __name__ == "__main__":
+    main()

@@ -1,6 +1,6 @@
 import shutil
+from collections.abc import Callable, Mapping
 from pathlib import Path
-from typing import Callable, Dict, Mapping, Union
 
 from tinydb.table import Table
 from undetected_chromedriver import patcher
@@ -41,7 +41,7 @@ def patch_undetected_chromedriver():
 
 def patch_tinydb():
 
-    def _update_table(self, updater: Callable[[Dict[int, Mapping]], None]):
+    def _update_table(self, updater: Callable[[dict[int, Mapping]], None]):
         """
         Perform a table update operation.
 

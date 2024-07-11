@@ -8,22 +8,25 @@ from time import sleep
 from typing import Dict
 
 import requests
+from dotenv import load_dotenv
 from tqdm import tqdm
 
-from log_setup import log
+from ..log_setup import log
+
+load_dotenv(Path(__file__).parent.parent / ".env")
 
 HN_BASE_URL = os.getenv("HN_BASE_URL", "")
 HN_ID_PATTERN = re.compile(f"{re.escape(HN_BASE_URL)}/view/(\\d+)")
 
 
-download_dir = Path.cwd() / "downloaded"
-favorited_json = Path.cwd() / "favorited.json"
-downloaded_json = Path.cwd() / "downloaded.json"
+download_dir = Path(__file__).parent.parent / "downloaded"
+favorited_json = Path(__file__).parent / "favorited.json"
+downloaded_json = Path(__file__).parent.parent / "downloaded.json"
 
 with favorited_json.open("r", encoding="utf-8") as f:
     favorited_data: Dict[str, str] = json.load(f)
 
-cookies_txt = Path.cwd() / "hn_cookies.txt"
+cookies_txt = Path(__file__).parent / "hn_cookies.txt"
 with cookies_txt.open("r") as f:
     cookies_str = f.read()
     cookies_dict = {
@@ -122,38 +125,10 @@ def write_to_downloaded_json(url: str, filename: str):
             f.truncate()
 
 
-clean_download_index()
-download_all_favorites()
-
-# a_index_archive_json = Path.cwd() / "legacy" / "a_index_archive.json"
-# index_json = Path.cwd() / "index.json"
-
-# with a_index_archive_json.open("r", encoding="utf-8") as f:
-#     a_index_archive_data: Dict[str, Dict[str, str]] = json.load(f)
-
-# with index_json.open("r", encoding="utf-8") as f:
-#     index_data: Dict[str, Dict[str, str]] = json.load(f)
+def main():
+    clean_download_index()
+    download_all_favorites()
 
 
-# def fix_downloaded_urls():
-#     a_to_hn = {
-#         a_url: index_data[artist][path]
-#         for artist, entries in a_index_archive_data.items()
-#         for path, a_url in entries.items()
-#     }
-#     with downloaded_json.open("r+", encoding="utf-8") as f:
-#         downloaded_data: Dict[str, str] = json.load(f)
-#         downloaded_data = {
-#             a_to_hn[url] if url in a_to_hn else url: archive_filename
-#             for url, archive_filename in downloaded_data.items()
-#         }
-#         downloaded_data = dict(
-#             sorted(downloaded_data.items(), key=lambda item: item[1])
-#         )
-#         f.seek(0)
-#         json.dump(obj=downloaded_data, fp=f, indent=2, ensure_ascii=False)
-#         f.write("\n")
-#         f.truncate()
-
-
-# fix_downloaded_urls()
+if __name__ == "__main__":
+    main()

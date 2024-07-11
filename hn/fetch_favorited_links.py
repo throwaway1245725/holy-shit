@@ -7,18 +7,18 @@ import requests
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 
-from log_setup import log
+from ..log_setup import log
 
-load_dotenv()
+load_dotenv(Path(__file__).parent.parent / ".env")
 
 HN_BASE_URL = os.getenv("HN_BASE_URL", "")
 IGNORE_ALREADY_PROCESSED = (
     os.getenv("IGNORE_ALREADY_PROCESSED", "true").lower() == "true"
 )
 
-favorited_json = Path.cwd() / "favorited.json"
+favorited_json = Path(__file__).parent / "favorited.json"
 
-cookies_txt = Path.cwd() / "hn_cookies.txt"
+cookies_txt = Path(__file__).parent / "hn_cookies.txt"
 with cookies_txt.open("r") as f:
     cookies_str = f.read()
     cookies_dict = {
@@ -77,4 +77,9 @@ def get_favorites():
             break
 
 
-get_favorites()
+def main():
+    get_favorites()
+
+
+if __name__ == "__main__":
+    main()

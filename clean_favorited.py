@@ -7,15 +7,16 @@ from typing import Dict
 
 from log_setup import log
 
-favorited_json = Path.cwd() / "favorited.json"
-index_json = Path.cwd() / "index.json"
+hn_favorited_json = Path(__file__).parent / "hn" / "favorited.json"
+k_favorited_json = Path(__file__).parent / "k" / "favorited.json"
+index_json = Path(__file__).parent / "index.json"
 
 with index_json.open(mode="r", encoding="utf-8") as f:
     index_data: Dict[str, Dict[str, str]] = json.load(f)
 
 
-def clean_favorited():
-    with favorited_json.open("r+", encoding="utf-8") as f:
+def clean_favorited(json_file: Path):
+    with json_file.open("r+", encoding="utf-8") as f:
         favorited_data: Dict[str, str] = json.load(f)
         for entry_url, entry_name in favorited_data.items():
             entry_path = next(
@@ -36,4 +37,10 @@ def clean_favorited():
         f.truncate()
 
 
-clean_favorited()
+def main():
+    clean_favorited(hn_favorited_json)
+    clean_favorited(k_favorited_json)
+
+
+if __name__ == "__main__":
+    main()
