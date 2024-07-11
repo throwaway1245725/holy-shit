@@ -1,10 +1,11 @@
 import json
-import logging
 import os
 import sys
 from pathlib import Path
 from time import sleep
-from typing import Any, Callable, Dict, Tuple, Union
+from typing import Any, Callable
+
+sys.path.append(Path(__file__).parent.parent.as_posix())
 
 from monkey_patches import patch_undetected_chromedriver
 
@@ -14,15 +15,16 @@ import undetected_chromedriver as uc
 from dotenv import load_dotenv
 from selenium.common.exceptions import StaleElementReferenceException, TimeoutException
 from selenium.webdriver.common.by import By
+from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.wait import WebDriverWait
 
 from log_setup import log
 
-load_dotenv()
+load_dotenv(Path(__file__).parent.parent / ".env")
 
-BASE_URL = os.getenv("BASE_URL", "https://anchira.to")
+K_BASE_URL = os.getenv("K_BASE_URL")
 BROWSER_DATA_DIR = os.getenv("BROWSER_DATA_DIR")
 HEADLESS = os.getenv("HEADLESS", "true").lower() == "true"
 TIMEOUT = int(os.getenv("TIMEOUT", 10))
@@ -30,8 +32,8 @@ CAPTCHA = os.getenv("CAPTCHA", "false").lower() == "true"
 if CAPTCHA:
     HEADLESS = False
 
-cookies_txt = Path.cwd() / "a_cookies.txt"
-localstorage_json = Path.cwd() / "a_localstorage.json"
+cookies_txt = Path(__file__).parent / "k_cookies.txt"
+localstorage_json = Path(__file__).parent / "k_localstorage.json"
 
 with cookies_txt.open("r") as f:
     cookies_str = f.read()
@@ -44,7 +46,7 @@ with cookies_txt.open("r") as f:
     ]
 
 with localstorage_json.open("r") as f:
-    localstorage_dict: Dict[str, str] = json.load(f)
+    localstorage_dict: dict[str, str] = json.load(f)
 
 
 def program_exit():
@@ -95,7 +97,7 @@ def get_url(url):
 
 
 def wait_for_condition(
-    condition: Callable[[expected_conditions.AnyDriver], Any], selector=""
+    condition: Callable[[expected_conditions.WebDriverOrWebElement], Any], selector=""
 ) -> Any:
     elm_found = None
     while not elm_found:
@@ -108,8 +110,8 @@ def wait_for_condition(
 
 
 def wait_for_condition_once(
-    condition: Callable[[expected_conditions.AnyDriver], Any], selector=""
-) -> Union[Any, None]:
+    condition: Callable[[expected_conditions.WebDriverOrWebElement], Any], selector=""
+) -> Any | None:
     try:
         return WebDriverWait(browser, TIMEOUT).until(condition)
     except TimeoutException:
@@ -119,7 +121,7 @@ def wait_for_condition_once(
 
 def do_while_wait_for_condition(
     fn: Callable[[], None],
-    condition: Callable[[expected_conditions.AnyDriver], Any],
+    condition: Callable[[expected_conditions.WebDriverOrWebElement], Any],
     selector="",
 ) -> Any:
     elm_found = None
@@ -134,7 +136,7 @@ def do_while_wait_for_condition(
 
 
 def set_cookies_and_localstorage(browser: uc.Chrome):
-    get_url(BASE_URL)
+    get_url(K_BASE_URL)
     wait_for_condition(
         expected_conditions.presence_of_element_located((By.CSS_SELECTOR, "#main")),
         "#main",
@@ -150,7 +152,7 @@ def set_cookies_and_localstorage(browser: uc.Chrome):
 set_cookies_and_localstorage(browser)
 
 
-def text_not_empty_in_element(locator: Tuple[str, str]):
+def text_not_empty_in_element(locator: tuple[str, str]):
     """An expectation for checking if the given text is not empty
     specified element.
 

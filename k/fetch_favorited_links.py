@@ -1,87 +1,70 @@
 import json
-import logging
+import math
 import os
-import re
+import sys
 from pathlib import Path
-from typing import Dict, List
+from typing import Any
 
-from browser_setup import K_BASE_URL, get_url, wait_for_condition
+import requests
 from dotenv import load_dotenv
-from selenium.webdriver.common.by import By
-from selenium.webdriver.remote.webelement import WebElement
-from selenium.webdriver.support import expected_conditions
 
-from ..log_setup import log
+sys.path.append(Path(__file__).parent.parent.as_posix())
+from log_setup import log
 
 load_dotenv(Path(__file__).parent.parent / ".env")
 
+K_BASE_URL = os.getenv("K_BASE_URL", "")
+K_API_URL = os.getenv("K_API_URL", "")
 IGNORE_ALREADY_PROCESSED = (
     os.getenv("IGNORE_ALREADY_PROCESSED", "true").lower() == "true"
 )
+PRETTY_JSON = os.getenv("PRETTY_JSON", "true").lower() == "true"
 
-favorited_json = Path.cwd() / "favorited.json"
+favorited_json = Path(__file__).parent / "favorited.json"
+
+localstorage_json = Path(__file__).parent / "k_localstorage.json"
+with localstorage_json.open("r") as f:
+    localstorage_dict: dict[str, Any] = json.load(f)
+
+def get_url(url: str, params=None) -> requests.Response:
+    return requests.get(url, params=params, headers={
+        "Authorization": f"Bearer {localstorage_dict["token"]["session"]}",
+        "Origin": K_BASE_URL,
+        "Referer": f"{K_BASE_URL}/",
+    })
 
 
-def parse_favorite_page(page: int) -> bool:
-    FAVORITE_ARTICLE_SELECTOR = "#main > .feed > main > article"
-    get_url(f"{K_BASE_URL}/favorites?page={page}")
-    articles: List[WebElement] = wait_for_condition(
-        expected_conditions.presence_of_all_elements_located(
-            (By.CSS_SELECTOR, FAVORITE_ARTICLE_SELECTOR)
-        ),
-        "FAVORITE_ARTICLE_SELECTOR",
-    )
+def parse_favorite_page(page_num: int) -> bool:
+    page = get_url(f"{K_API_URL}/favorites", params={"page": page_num})
     with favorited_json.open("r+", encoding="utf-8") as f:
-        favorited_data: Dict[str, str] = json.load(f)
+        favorited_data: dict[str, str] = json.load(f)
         reached_already_processed = False
-        for article in articles:
-            a = article.find_element(By.TAG_NAME, "a")
-            link = a.get_attribute("href")
-            artists = article.find_elements(
-                By.CSS_SELECTOR, 'div a[data-namespace="1"]'
-            )
-            if link:
-                if link not in favorited_data.keys():
-                    favorited_data[link] = (
-                        f"!<not yet downloaded> {artists[0].accessible_name}/{a.accessible_name}"
-                        if artists
-                        else f"!<not yet downloaded> unknown/{a.accessible_name}"
-                    )
-                else:
-                    reached_already_processed = True
-                    break
+        for entry in page.json()["entries"]:
+            link: str = f"{K_BASE_URL}/g/{entry['id']}/{entry['public_key']}"
+            title: str = entry["title"]
+            if link not in favorited_data.keys():
+                favorited_data[link] = f"!<not yet downloaded> {title}"
+            else:
+                reached_already_processed = True
+                break
 
-        favorited_data = dict(sorted(favorited_data.items(), key=lambda item: item[1]))
+        if PRETTY_JSON:
+            favorited_data = dict(sorted(favorited_data.items(), key=lambda item: item[1]))
         f.seek(0)
-        json.dump(obj=favorited_data, fp=f, indent=2, ensure_ascii=False)
+        json.dump(obj=favorited_data, fp=f, indent=2 if PRETTY_JSON else None, ensure_ascii=False)
         f.write("\n")
         f.truncate()
         return reached_already_processed
 
 
 def get_favorites():
-    PAGE_PATTERN = re.compile(r".*\/favorites\?page=(\d+)")
-    LAST_PAGE_SELECTOR = "#main > .feed > footer > nav > a[title*='last page']"
-    get_url(f"{K_BASE_URL}/favorites")
-    last_page_btn: WebElement = wait_for_condition(
-        expected_conditions.presence_of_element_located(
-            (By.CSS_SELECTOR, LAST_PAGE_SELECTOR)
-        ),
-        "LAST_PAGE_SELECTOR",
-    )
-    last_page_link = last_page_btn.get_attribute("href")
-    if (
-        not last_page_link
-        or not (m := PAGE_PATTERN.match(last_page_link))
-        or not m.group(1)
-    ):
-        raise Exception("can't find last page button")
-    n_pages: str = m.group(1)
-
-    for page in range(1, int(n_pages) + 1):
-        log.info(f"parsing page: {page}")
-        reached_already_processed = parse_favorite_page(page)
-        if reached_already_processed:
+    page = get_url(f"{K_API_URL}/favorites")
+    page_data = page.json()
+    num_pages: int = math.ceil(page_data["total"] / page_data["limit"])
+    for page_num in range(num_pages, 1, -1):
+        log.info(f"parsing page: {page_num}")
+        reached_already_processed = parse_favorite_page(page_num)
+        if IGNORE_ALREADY_PROCESSED and reached_already_processed:
             log.info("reached already processed, stopping")
             break
 

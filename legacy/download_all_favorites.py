@@ -1,12 +1,8 @@
 import json
 import re
+import sys
 from pathlib import Path
 from time import sleep
-from typing import Dict
-
-from selenium.webdriver.common.by import By
-from selenium.webdriver.remote.webelement import WebElement
-from selenium.webdriver.support import expected_conditions as ec
 
 from browser_setup import (
     CAPTCHA,
@@ -16,20 +12,25 @@ from browser_setup import (
     text_not_empty_in_element,
     wait_for_condition,
 )
+from selenium.webdriver.common.by import By
+from selenium.webdriver.remote.webelement import WebElement
+from selenium.webdriver.support import expected_conditions as ec
+
+sys.path.append(Path(__file__).parent.parent.as_posix())
 from log_setup import log
 
-download_dir = Path.cwd() / "downloaded"
-favorited_json = Path.cwd() / "favorited.json"
-downloaded_json = Path.cwd() / "downloaded.json"
+download_dir = Path(__file__).parent.parent / "downloaded"
+favorited_json = Path(__file__).parent / "favorited.json"
+downloaded_json = Path(__file__).parent / "downloaded.json"
 
 with favorited_json.open("r", encoding="utf-8") as f:
-    favorited_data: Dict[str, str] = json.load(f)
+    favorited_data: dict[str, str] = json.load(f)
 
 
 def clean_download_index():
     downloaded_archives = set(archive.stem for archive in download_dir.iterdir())
     with downloaded_json.open("r+", encoding="utf-8") as f:
-        downloaded_data: Dict[str, str] = json.load(f)
+        downloaded_data: dict[str, str] = json.load(f)
         downloaded_archives_index = set(downloaded_data.values())
         extra_archives_str = "\n".join(downloaded_archives_index - downloaded_archives)
         if extra_archives_str:
@@ -53,7 +54,7 @@ def clean_download_index():
 def download_all_favorites():
     for url, path in favorited_data.items():
         with downloaded_json.open("r", encoding="utf-8") as f:
-            downloaded_data: Dict[str, str] = json.load(f)
+            downloaded_data: dict[str, str] = json.load(f)
         if not url in downloaded_data.keys():
             log.warning(f"downloading favorite: '{url} : {path}'")
             download_archive(url)
@@ -156,7 +157,7 @@ def get_downloaded_filename(url: str, archive_name: str):
 
 def write_to_downloaded_json(url: str, filename: str):
     with downloaded_json.open("r+", encoding="utf-8") as f:
-        downloaded_data: Dict[str, str] = json.load(f)
+        downloaded_data: dict[str, str] = json.load(f)
         if url not in downloaded_data.keys():
             downloaded_data[url] = filename
             downloaded_data = dict(
@@ -168,5 +169,10 @@ def write_to_downloaded_json(url: str, filename: str):
             f.truncate()
 
 
-clean_download_index()
-download_all_favorites()
+def main():
+    clean_download_index()
+    download_all_favorites()
+
+
+if __name__ == "__main__":
+    main()

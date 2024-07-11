@@ -10,7 +10,7 @@ patch_tinydb()
 
 
 db = TinyDB("db.json", indent=2, ensure_ascii=False, sort_keys=True, encoding="utf-8")
-data_dir = Path.cwd() / "data"
+data_dir = Path(__file__).parent / "data"
 
 
 # https://tinydb.readthedocs.io/en/latest/usage.html

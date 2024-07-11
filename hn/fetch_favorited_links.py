@@ -1,5 +1,6 @@
 import json
 import os
+import sys
 from pathlib import Path
 from typing import Dict
 
@@ -7,7 +8,8 @@ import requests
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 
-from ..log_setup import log
+sys.path.append(Path(__file__).parent.parent.as_posix())
+from log_setup import log
 
 load_dotenv(Path(__file__).parent.parent / ".env")
 
@@ -72,7 +74,7 @@ def get_favorites():
     for page_num in range(1, int(last_page_num) + 1):
         log.info(f"parsing page: {page_num}")
         reached_already_processed = parse_favorite_page(page_num)
-        if reached_already_processed:
+        if IGNORE_ALREADY_PROCESSED and reached_already_processed:
             log.info("reached already processed, stopping")
             break
 

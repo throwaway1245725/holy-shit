@@ -27,25 +27,25 @@ I_BASE_URL = os.getenv("I_BASE_URL", "")
 IMAGE_SUFFIXES = [".jpg", ".jpeg", ".png"]
 
 
-data_dir = Path.cwd() / "data"
+data_dir = Path(__file__).parent / "data"
 
-downloaded_json = Path.cwd() / "downloaded.json"
+downloaded_json = Path(__file__).parent / "downloaded.json"
 with downloaded_json.open(mode="r", encoding="utf-8") as f:
     downloaded_data: dict[str, str] = json.load(f)
 
-index_json = Path.cwd() / "index.json"
+index_json = Path(__file__).parent / "index.json"
 with index_json.open(mode="r", encoding="utf-8") as f:
     index_data: dict[str, dict[str, str]] = json.load(f)
 
-original_sources_json = Path.cwd() / "original_sources.json"
+original_sources_json = Path(__file__).parent / "original_sources.json"
 with original_sources_json.open(mode="r", encoding="utf-8") as f:
     original_sources_data: dict[str, str] = json.load(f)
 
-fallback_metadata_json = Path.cwd() / "fallback_metadata.json"
+fallback_metadata_json = Path(__file__).parent / "fallback_metadata.json"
 with fallback_metadata_json.open(mode="r", encoding="utf-8") as f:
     fallback_metadata_data: dict[str, dict[str, Any]] = json.load(f)
 
-cookies_txt = Path.cwd() / "f_cookies.txt"
+cookies_txt = Path(__file__).parent / "f_cookies.txt"
 with cookies_txt.open("r") as f:
     cookies_str = f.read()
     cookies_dict = {

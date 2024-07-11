@@ -2,6 +2,7 @@ import json
 import os
 import re
 import shutil
+import sys
 from email.message import Message
 from pathlib import Path
 from time import sleep
@@ -11,7 +12,8 @@ import requests
 from dotenv import load_dotenv
 from tqdm import tqdm
 
-from ..log_setup import log
+sys.path.append(Path(__file__).parent.parent.as_posix())
+from log_setup import log
 
 load_dotenv(Path(__file__).parent.parent / ".env")
 

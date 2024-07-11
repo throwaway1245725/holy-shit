@@ -6,10 +6,10 @@ from pathlib import Path
 
 from log_setup import log
 
-data_dir = Path.cwd() / "data"
-downloaded_dir = Path.cwd() / "downloaded"
-downloaded_json = Path.cwd() / "downloaded.json"
-index_json = Path.cwd() / "index.json"
+data_dir = Path(__file__).parent / "data"
+downloaded_dir = Path(__file__).parent / "downloaded"
+downloaded_json = Path(__file__).parent / "downloaded.json"
+index_json = Path(__file__).parent / "index.json"
 with index_json.open(mode="r", encoding="utf-8") as f:
     index_data: dict[str, dict[str, str]] = json.load(f)
 with downloaded_json.open(mode="r", encoding="utf-8") as f:
@@ -312,7 +312,7 @@ def clean_filenames():
 
 def check_multi_entries():
     log.info("========== checking for new multi-entries ==========")
-    multi_entries_json = Path.cwd() / "multi_entries.json"
+    multi_entries_json = Path(__file__).parent / "multi_entries.json"
     with multi_entries_json.open("r") as f:
         confirmed_multi_entries = set(json.load(f))
     existing_multi_entries = set(
