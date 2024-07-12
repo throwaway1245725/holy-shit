@@ -4,6 +4,7 @@ import re
 import sys
 from email.message import Message
 from pathlib import Path
+from typing import Any
 
 import requests
 from dotenv import load_dotenv
@@ -20,15 +21,22 @@ K_ID_PATTERN = re.compile(f"{re.escape(K_BASE_URL)}/g/(\\d+)/(.*)")
 
 
 download_dir = Path(__file__).parent.parent / "downloaded"
-favorited_json = Path(__file__).parent / "favorited.json"
 downloaded_json = Path(__file__).parent.parent / "downloaded.json"
-url_map_json = Path(__file__).parent.parent / "url_map.json"
 
+url_map_json = Path(__file__).parent.parent / "url_map.json"
 with url_map_json.open("r", encoding="utf-8") as f:
     url_map: dict[str, str] = json.load(f)
 
+favorited_json = Path(__file__).parent / "favorited.json"
 with favorited_json.open("r", encoding="utf-8") as f:
     favorited_data: dict[str, str] = json.load(f)
+
+localstorage_json = Path(__file__).parent / "k_localstorage.json"
+with localstorage_json.open("r") as f:
+    localstorage_dict: dict[str, Any] = json.load(f)
+
+HEADERS = {"Origin": K_BASE_URL, "Referer": f"{K_BASE_URL}/"}
+ACCESS_TOKEN = localstorage_dict["token"]["session"]
 
 
 def clean_download_index():
@@ -65,10 +73,9 @@ def extract_filename(headers):
         raise Exception("not supposed to happen!")
 
 
-def download_file(filepath: Path, response: requests.Response):
+def download_file(filepath: Path, response: requests.Response, file_size: int):
     if filepath.exists():
         raise Exception("file already exists?!")
-    file_size = int(response.headers["content-length"])
     chunk_size = 1024 * 16
     with open(filepath, "wb") as f:
         with tqdm(
@@ -101,15 +108,27 @@ def write_to_downloaded_json(url: str, filename: str):
 def download_archive(url):
     if m := K_ID_PATTERN.match(url):
         details_url = f"{K_API_URL}/books/detail/{m.group(1)}/{m.group(2)}"
-        details_r = requests.get(
-            details_url, headers={"Origin": K_BASE_URL, "Referer": f"{K_BASE_URL}/"}
-        )
+        details_r = requests.get(details_url, headers=HEADERS)
         details = details_r.json()
+        dl_details = details["data"]["0"]
 
-        dl_url = f"{K_BASE_URL}/zip/{m.group(1)}"
-        with requests.get(dl_url, stream=True) as details_r:
-            filepath = download_dir / extract_filename(details_r.headers)
-            download_file(filepath, details_r)
+        dl_pre_url = f"{K_API_URL}/books/data/{m.group(1)}/{m.group(2)}/{dl_details['id']}/{dl_details['public_key']}"
+        pre_url_r = requests.post(
+            dl_pre_url,
+            params={"action": "dl"},
+            data={"token": ACCESS_TOKEN},
+            headers=HEADERS,
+        )
+        dl_url = pre_url_r.json()["base"]
+
+        with requests.get(
+            dl_url,
+            params={"v": details["updated_at"], "w": 0},
+            headers=HEADERS,
+            stream=True,
+        ) as r:
+            filepath = download_dir / extract_filename(r.headers)
+            download_file(filepath, r, dl_details["size"])
             log.info(f"finished downloading '{url} : {filepath}'")
             if filepath.suffix != ".cbz":
                 filepath_cbz = filepath.with_suffix(".cbz")
@@ -125,7 +144,7 @@ def download_all_favorites():
             downloaded_data: dict[str, str] = json.load(f)
         if (
             not url in downloaded_data.keys()
-            or not url_map[url] in downloaded_data.keys()
+            and not url_map.get(url, None) in downloaded_data.keys()
         ):
             log.info(f"downloading favorite: '{url} : {path}'")
             download_archive(url)
