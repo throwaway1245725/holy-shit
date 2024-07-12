@@ -1,17 +1,25 @@
 import collections
 import json
+import os
+import re
 from pathlib import Path
+
+from dotenv import load_dotenv
 
 from log_setup import log
 
+load_dotenv()
+
+HN_BASE_URL = os.getenv("HN_BASE_URL", "")
+
 hn_favorited_json = Path(__file__).parent / "hn" / "favorited.json"
 k_favorited_json = Path(__file__).parent / "k" / "favorited.json"
-index_json = Path(__file__).parent / "index.json"
-url_map_json = Path(__file__).parent / "url_map.json"
 
+index_json = Path(__file__).parent / "index.json"
 with index_json.open(mode="r", encoding="utf-8") as f:
     index_data: dict[str, dict[str, str]] = json.load(f)
 
+url_map_json = Path(__file__).parent / "url_map.json"
 with url_map_json.open(mode="r", encoding="utf-8") as f:
     url_map_data: dict[str, str] = json.load(f)
 
@@ -42,6 +50,7 @@ def clean_favorited(json_file: Path):
 
 
 def map_urls():
+    HN_ID_PATTERN = re.compile(f"{re.escape(HN_BASE_URL)}/view/(\\d+)")
     with hn_favorited_json.open("r", encoding="utf-8") as f:
         hn_favorited_data: dict[str, str] = json.load(f)
     with k_favorited_json.open("r", encoding="utf-8") as f:
@@ -77,7 +86,13 @@ def map_urls():
     print_missing(missing_from_hn)
 
     with url_map_json.open("w", encoding="utf-8") as f:
-        json.dump(obj=right_intersection, fp=f, indent=2)
+        intersection = dict(
+            sorted(
+                right_intersection.items(),
+                key=lambda item: -int(HN_ID_PATTERN.match(item[0]).group(1)),  # type: ignore
+            )
+        )
+        json.dump(obj=intersection, fp=f, indent=2)
 
 
 def check_dupes(intersection: dict[str, str]):
