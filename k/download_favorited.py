@@ -25,7 +25,7 @@ downloaded_json = Path(__file__).parent.parent / "downloaded.json"
 
 url_map_json = Path(__file__).parent.parent / "url_map.json"
 with url_map_json.open("r", encoding="utf-8") as f:
-    url_map: dict[str, str] = json.load(f)
+    url_map: dict[str, str] = {k_url: hn_url for hn_url, k_url in json.load(f).items()}
 
 favorited_json = Path(__file__).parent / "favorited.json"
 with favorited_json.open("r", encoding="utf-8") as f:
@@ -142,9 +142,9 @@ def download_all_favorites():
     for url, path in favorited_data.items():
         with downloaded_json.open("r", encoding="utf-8") as f:
             downloaded_data: dict[str, str] = json.load(f)
-        if (
-            not url in downloaded_data.keys()
-            and not url_map.get(url, None) in downloaded_data.keys()
+        if not (
+            url in downloaded_data.keys()
+            or url_map.get(url, None) in downloaded_data.keys()
         ):
             log.info(f"downloading favorite: '{url} : {path}'")
             download_archive(url)
