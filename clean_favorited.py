@@ -14,6 +14,8 @@ HN_BASE_URL = os.getenv("HN_BASE_URL", "")
 
 hn_favorited_json = Path(__file__).parent / "hn" / "favorited.json"
 k_favorited_json = Path(__file__).parent / "k" / "favorited.json"
+downloaded_json = Path(__file__).parent / "downloaded.json"
+original_sources_json = Path(__file__).parent / "original_sources.json"
 
 index_json = Path(__file__).parent / "index.json"
 with index_json.open(mode="r", encoding="utf-8") as f:
@@ -47,6 +49,30 @@ def clean_favorited(json_file: Path):
         json.dump(obj=favorited_data, fp=f, indent=2, ensure_ascii=False)
         f.write("\n")
         f.truncate()
+
+
+def check_dupes(intersection: dict[str, str]):
+    value_counts = collections.Counter(intersection.values())
+    dupes = {k: v for k, v in intersection.items() if value_counts[v] != 1}
+    if dupes:
+        dupes = dict(
+            sorted(
+                dupes.items(),
+                key=lambda item: item[1],
+            )
+        )
+        log.warning(f"duplicate matches found: {json.dumps(dupes, indent=2)}")
+
+
+def print_missing(missing: dict[str, str]):
+    missing = dict(
+        sorted(
+            missing.items(),
+            key=lambda item: item[0],
+        )
+    )
+    if missing:
+        log.warning(f"missing entries: {json.dumps(missing, indent=2)}")
 
 
 def map_urls():
@@ -95,34 +121,66 @@ def map_urls():
         json.dump(obj=intersection, fp=f, indent=2)
 
 
-def check_dupes(intersection: dict[str, str]):
-    value_counts = collections.Counter(intersection.values())
-    dupes = {k: v for k, v in intersection.items() if value_counts[v] != 1}
-    if dupes:
-        dupes = dict(
-            sorted(
-                dupes.items(),
-                key=lambda item: item[1],
-            )
-        )
-        log.warning(f"duplicate matches found: {json.dumps(dupes, indent=2)}")
+def switch_all_urls(to: str):
+    with url_map_json.open(mode="r", encoding="utf-8") as f:
+        url_map_data: dict[str, str] = json.load(f)
+    url_map = {k: hn for hn, k in url_map_data.items()} if to == "hn" else url_map_data
 
-
-def print_missing(missing: dict[str, str]):
-    missing = dict(
-        sorted(
-            missing.items(),
-            key=lambda item: item[0],
+    with downloaded_json.open("r+", encoding="utf-8") as f:
+        downloaded_data: dict[str, str] = json.load(f)
+        downloaded_data = {
+            url_map.get(url, url): filename for url, filename in downloaded_data.items()
+        }
+        downloaded_data = dict(
+            sorted(downloaded_data.items(), key=lambda item: item[1])
         )
-    )
-    if missing:
-        log.warning(f"missing entries: {json.dumps(missing, indent=2)}")
+        f.seek(0)
+        json.dump(obj=downloaded_data, fp=f, indent=2, ensure_ascii=False)
+        f.write("\n")
+        f.truncate()
+
+    with index_json.open("r+", encoding="utf-8") as f:
+        index_data: dict[str, dict[str, str]] = json.load(f)
+        index_data = {
+            artist: {entry: url_map.get(url, url) for entry, url in entries.items()}
+            for artist, entries in index_data.items()
+        }
+        f.seek(0)
+        json.dump(
+            obj=index_data,
+            fp=f,
+            indent=2,
+            ensure_ascii=False,
+            sort_keys=True,
+        )
+        f.write("\n")
+        f.truncate()
+
+    with original_sources_json.open("r+", encoding="utf-8") as f:
+        original_sources_data: dict[str, str] = json.load(f)
+        original_sources_data = {
+            url_map.get(url, url): source_url
+            for url, source_url in original_sources_data.items()
+        }
+        original_sources_data = dict(
+            sorted(original_sources_data.items(), key=lambda item: item[1])
+        )
+        f.seek(0)
+        json.dump(
+            obj=original_sources_data,
+            fp=f,
+            indent=2,
+            ensure_ascii=False,
+        )
+        f.write("\n")
+        f.truncate()
 
 
 def main():
     clean_favorited(hn_favorited_json)
     clean_favorited(k_favorited_json)
     map_urls()
+    switch_all_urls("k")
 
 
 if __name__ == "__main__":
