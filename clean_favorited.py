@@ -64,17 +64,6 @@ def check_dupes(intersection: dict[str, str]):
         log.warning(f"duplicate matches found: {json.dumps(dupes, indent=2)}")
 
 
-def print_missing(missing: dict[str, str]):
-    missing = dict(
-        sorted(
-            missing.items(),
-            key=lambda item: item[0],
-        )
-    )
-    if missing:
-        log.warning(f"missing entries: {json.dumps(missing, indent=2)}")
-
-
 def map_urls():
     HN_ID_PATTERN = re.compile(f"{re.escape(HN_BASE_URL)}/view/(\\d+)")
     with hn_favorited_json.open("r", encoding="utf-8") as f:
@@ -108,8 +97,27 @@ def map_urls():
         for k_url, k_path in k_favorited_data.items()
         if k_path not in reverse_hn
     }
-    print_missing(missing_from_k)
-    print_missing(missing_from_hn)
+
+    missing_from_k = dict(
+        sorted(
+            missing_from_k.items(),
+            key=lambda item: item[0],
+        )
+    )
+    missing_from_hn = dict(
+        sorted(
+            missing_from_hn.items(),
+            key=lambda item: item[0],
+        )
+    )
+    if missing_from_k:
+        log.warning(
+            f"missing_from_k ({len(missing_from_k)}): {json.dumps(missing_from_k, indent=2)}"
+        )
+    if missing_from_hn:
+        log.warning(
+            f"missing_from_hn ({len(missing_from_hn)}): {json.dumps(missing_from_hn, indent=2)}"
+        )
 
     with url_map_json.open("w", encoding="utf-8") as f:
         intersection = dict(
