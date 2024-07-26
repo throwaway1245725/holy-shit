@@ -115,7 +115,7 @@ def download_archive(url):
         dl_pre_url = f"{K_API_URL}/books/data/{m.group(1)}/{m.group(2)}/{dl_details['id']}/{dl_details['public_key']}"
         pre_url_r = requests.post(
             dl_pre_url,
-            params={"action": "dl"},
+            params={"action": "dl", "v": details["updated_at"], "w": 0},
             data={"token": ACCESS_TOKEN},
             headers=HEADERS,
         )
