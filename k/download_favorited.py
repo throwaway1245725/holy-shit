@@ -112,6 +112,9 @@ def download_archive(url):
         details = details_r.json()
         dl_details = details["data"]["0"]
 
+        if "id" not in dl_details:
+            log.error(f"could not download {details['title']}")
+            return
         dl_pre_url = f"{K_API_URL}/books/data/{m.group(1)}/{m.group(2)}/{dl_details['id']}/{dl_details['public_key']}"
         pre_url_r = requests.post(
             dl_pre_url,
