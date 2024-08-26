@@ -188,7 +188,7 @@ def main():
     clean_favorited(hn_favorited_json)
     clean_favorited(k_favorited_json)
     map_urls()
-    switch_all_urls("k")
+    switch_all_urls("hn")
 
 
 if __name__ == "__main__":
