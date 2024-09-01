@@ -26,26 +26,27 @@ F_BASE_URL = os.getenv("F_BASE_URL", "")
 I_BASE_URL = os.getenv("I_BASE_URL", "")
 IMAGE_SUFFIXES = [".jpg", ".jpeg", ".png"]
 
+parent_dir = Path(__file__).parent
 
-data_dir = Path(__file__).parent / "data"
+data_dir = parent_dir / "data"
 
-downloaded_json = Path(__file__).parent / "downloaded.json"
+downloaded_json = parent_dir / "downloaded.json"
 with downloaded_json.open(mode="r", encoding="utf-8") as f:
     downloaded_data: dict[str, str] = json.load(f)
 
-index_json = Path(__file__).parent / "index.json"
+index_json = parent_dir / "index.json"
 with index_json.open(mode="r", encoding="utf-8") as f:
     index_data: dict[str, dict[str, str]] = json.load(f)
 
-original_sources_json = Path(__file__).parent / "original_sources.json"
+original_sources_json = parent_dir / "original_sources.json"
 with original_sources_json.open(mode="r", encoding="utf-8") as f:
     original_sources_data: dict[str, str] = json.load(f)
 
-fallback_metadata_json = Path(__file__).parent / "fallback_metadata.json"
+fallback_metadata_json = parent_dir / "fallback_metadata.json"
 with fallback_metadata_json.open(mode="r", encoding="utf-8") as f:
     fallback_metadata_data: dict[str, dict[str, Any]] = json.load(f)
 
-cookies_txt = Path(__file__).parent / "f_cookies.txt"
+cookies_txt = parent_dir / "f_cookies.txt"
 with cookies_txt.open("r") as f:
     cookies_str = f.read()
     cookies_dict = {
@@ -229,7 +230,7 @@ def search_entry(artist: str, download_title: str, index_title: str) -> str | No
     return None
 
 
-def fetch_metadata_f(url: str, entry_path: Path) -> dict[str, str]:
+def fetch_metadata_f(url: str, entry_path: Path) -> dict[str, Any]:
     F_MULTI_KEYS_MAPPING = {
         "Artist": "artists",
         "Parody": "parodies",
@@ -339,7 +340,7 @@ def fetch_metadata_f(url: str, entry_path: Path) -> dict[str, str]:
     return metadata
 
 
-def fetch_metadata_i(url: str, entry_path: Path) -> dict[str, str]:
+def fetch_metadata_i(url: str, entry_path: Path) -> dict[str, Any]:
     metadata = {
         "title": None,
         "artists": [],
@@ -412,7 +413,7 @@ def fetch_metadata_i(url: str, entry_path: Path) -> dict[str, str]:
     return metadata
 
 
-def fetch_metadata_l(url: str, entry_path: Path) -> dict[str, str] | None:
+def fetch_metadata_l(url: str, entry_path: Path) -> dict[str, Any] | None:
     metadata = {
         "title": None,
         "artists": [],

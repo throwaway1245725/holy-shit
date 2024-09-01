@@ -10,28 +10,30 @@ import requests
 from dotenv import load_dotenv
 from tqdm import tqdm
 
-sys.path.append(Path(__file__).parent.parent.as_posix())
+parent_dir = Path(__file__).parent
+
+sys.path.append(parent_dir.parent.as_posix())
 from log_setup import log
 
-load_dotenv(Path(__file__).parent.parent / ".env")
+load_dotenv(parent_dir.parent / ".env")
 
 K_BASE_URL = os.getenv("K_BASE_URL", "")
 K_API_URL = os.getenv("K_API_URL", "")
 K_ID_PATTERN = re.compile(f"{re.escape(K_BASE_URL)}/g/(\\d+)/(.*)")
 
 
-download_dir = Path(__file__).parent.parent / "downloaded"
-downloaded_json = Path(__file__).parent.parent / "downloaded.json"
+download_dir = parent_dir.parent / "downloaded"
+downloaded_json = parent_dir.parent / "downloaded.json"
 
-url_map_json = Path(__file__).parent.parent / "url_map.json"
+url_map_json = parent_dir.parent / "url_map.json"
 with url_map_json.open("r", encoding="utf-8") as f:
     url_map: dict[str, str] = {k_url: hn_url for hn_url, k_url in json.load(f).items()}
 
-favorited_json = Path(__file__).parent / "favorited.json"
+favorited_json = parent_dir / "favorited.json"
 with favorited_json.open("r", encoding="utf-8") as f:
     favorited_data: dict[str, str] = json.load(f)
 
-localstorage_json = Path(__file__).parent / "k_localstorage.json"
+localstorage_json = parent_dir / "k_localstorage.json"
 with localstorage_json.open("r") as f:
     localstorage_dict: dict[str, Any] = json.load(f)
 

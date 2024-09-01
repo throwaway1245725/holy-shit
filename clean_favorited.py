@@ -12,16 +12,18 @@ load_dotenv()
 
 HN_BASE_URL = os.getenv("HN_BASE_URL", "")
 
-hn_favorited_json = Path(__file__).parent / "hn" / "favorited.json"
-k_favorited_json = Path(__file__).parent / "k" / "favorited.json"
-downloaded_json = Path(__file__).parent / "downloaded.json"
-original_sources_json = Path(__file__).parent / "original_sources.json"
+parent_dir = Path(__file__).parent
 
-index_json = Path(__file__).parent / "index.json"
+hn_favorited_json = parent_dir / "hn" / "favorited.json"
+k_favorited_json = parent_dir / "k" / "favorited.json"
+downloaded_json = parent_dir / "downloaded.json"
+original_sources_json = parent_dir / "original_sources.json"
+
+index_json = parent_dir / "index.json"
 with index_json.open(mode="r", encoding="utf-8") as f:
     index_data: dict[str, dict[str, str]] = json.load(f)
 
-url_map_json = Path(__file__).parent / "url_map.json"
+url_map_json = parent_dir / "url_map.json"
 with url_map_json.open(mode="r", encoding="utf-8") as f:
     url_map_data: dict[str, str] = json.load(f)
 

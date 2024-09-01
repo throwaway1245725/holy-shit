@@ -8,10 +8,12 @@ from typing import Any
 import requests
 from dotenv import load_dotenv
 
-sys.path.append(Path(__file__).parent.parent.as_posix())
+parent_dir = Path(__file__).parent
+
+sys.path.append(parent_dir.parent.as_posix())
 from log_setup import log
 
-load_dotenv(Path(__file__).parent.parent / ".env")
+load_dotenv(parent_dir.parent / ".env")
 
 K_BASE_URL = os.getenv("K_BASE_URL", "")
 K_API_URL = os.getenv("K_API_URL", "")
@@ -20,9 +22,9 @@ IGNORE_ALREADY_PROCESSED = (
 )
 PRETTY_JSON = os.getenv("PRETTY_JSON", "true").lower() == "true"
 
-favorited_json = Path(__file__).parent / "favorited.json"
+favorited_json = parent_dir / "favorited.json"
 
-localstorage_json = Path(__file__).parent / "k_localstorage.json"
+localstorage_json = parent_dir / "k_localstorage.json"
 with localstorage_json.open("r") as f:
     localstorage_dict: dict[str, Any] = json.load(f)
 

@@ -1,11 +1,13 @@
 import json
 from pathlib import Path
 
-hn_favorited_json = Path(__file__).parent / "hn" / "favorited.json"
+parent_dir = Path(__file__).parent
+
+hn_favorited_json = parent_dir / "hn" / "favorited.json"
 with hn_favorited_json.open(mode="r", encoding="utf-8") as f:
     hn_favorited_data: dict[str, str] = json.load(f)
 
-k_favorited_json = Path(__file__).parent / "k" / "favorited.json"
+k_favorited_json = parent_dir / "k" / "favorited.json"
 with k_favorited_json.open(mode="r", encoding="utf-8") as f:
     k_favorited_data: dict[str, str] = json.load(f)
 

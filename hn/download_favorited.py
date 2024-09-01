@@ -9,27 +9,29 @@ import requests
 from dotenv import load_dotenv
 from tqdm import tqdm
 
-sys.path.append(Path(__file__).parent.parent.as_posix())
+parent_dir = Path(__file__).parent
+
+sys.path.append(parent_dir.parent.as_posix())
 from log_setup import log
 
-load_dotenv(Path(__file__).parent.parent / ".env")
+load_dotenv(parent_dir.parent / ".env")
 
 HN_BASE_URL = os.getenv("HN_BASE_URL", "")
 HN_ID_PATTERN = re.compile(f"{re.escape(HN_BASE_URL)}/view/(\\d+)")
 
 
-download_dir = Path(__file__).parent.parent / "downloaded"
-favorited_json = Path(__file__).parent / "favorited.json"
-downloaded_json = Path(__file__).parent.parent / "downloaded.json"
+download_dir = parent_dir.parent / "downloaded"
+favorited_json = parent_dir / "favorited.json"
+downloaded_json = parent_dir.parent / "downloaded.json"
 
-url_map_json = Path(__file__).parent.parent / "url_map.json"
+url_map_json = parent_dir.parent / "url_map.json"
 with url_map_json.open("r", encoding="utf-8") as f:
     url_map: dict[str, str] = json.load(f)
 
 with favorited_json.open("r", encoding="utf-8") as f:
     favorited_data: dict[str, str] = json.load(f)
 
-cookies_txt = Path(__file__).parent / "hn_cookies.txt"
+cookies_txt = parent_dir / "hn_cookies.txt"
 with cookies_txt.open("r") as f:
     cookies_str = f.read()
     cookies_dict = {
