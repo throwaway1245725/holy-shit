@@ -132,6 +132,7 @@ def map_urls():
 
 
 def switch_all_urls(to: str):
+    log.info(f"switching all urls to {to}")
     with url_map_json.open(mode="r", encoding="utf-8") as f:
         url_map_data: dict[str, str] = json.load(f)
     url_map = {k: hn for hn, k in url_map_data.items()} if to == "hn" else url_map_data

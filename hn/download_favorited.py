@@ -117,6 +117,8 @@ def download_archive(url):
                 filepath = filepath_cbz
                 log.info(f"renamed zip to cbz: {filepath}")
             write_to_downloaded_json(url, filepath.stem)
+    else:
+        raise Exception(f"wrong url type {url}")
 
 
 def write_to_downloaded_json(url: str, filename: str):

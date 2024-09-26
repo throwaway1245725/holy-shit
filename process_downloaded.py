@@ -10,12 +10,14 @@ parent_dir = Path(__file__).parent
 
 data_dir = parent_dir / "data"
 downloaded_dir = parent_dir / "downloaded"
+
 downloaded_json = parent_dir / "downloaded.json"
+with downloaded_json.open(mode="r", encoding="utf-8") as f:
+    downloaded_data: dict[str, str] = json.load(f)
+
 index_json = parent_dir / "index.json"
 with index_json.open(mode="r", encoding="utf-8") as f:
     index_data: dict[str, dict[str, str]] = json.load(f)
-with downloaded_json.open(mode="r", encoding="utf-8") as f:
-    downloaded_data: dict[str, str] = json.load(f)
 
 
 def add_rename_path(

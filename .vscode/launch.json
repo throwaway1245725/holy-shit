@@ -29,6 +29,14 @@
       "justMyCode": false
     },
     {
+      "name": "hn/redownload_inferior",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/hn/redownload_inferior.py",
+      "console": "integratedTerminal",
+      "justMyCode": false
+    },
+    {
       "name": "k/fetch_favorited_links",
       "type": "debugpy",
       "request": "launch",
