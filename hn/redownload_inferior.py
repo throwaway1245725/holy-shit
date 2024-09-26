@@ -1,15 +1,11 @@
 import json
 import os
 import re
-import shutil
 import sys
 import zipfile
-from email.message import Message
 from pathlib import Path
 
-import requests
 from dotenv import load_dotenv
-from tqdm import tqdm
 
 parent_dir = Path(__file__).parent
 
