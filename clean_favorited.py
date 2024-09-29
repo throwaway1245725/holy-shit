@@ -129,6 +129,7 @@ def map_urls():
             )
         )
         json.dump(obj=intersection, fp=f, indent=2)
+        f.write("\n")
 
 
 def switch_all_urls(to: str):
