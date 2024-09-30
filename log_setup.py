@@ -17,3 +17,4 @@ formatter = logging.Formatter(
 )
 handler.setFormatter(formatter)
 log.addHandler(handler)
+log.info("starting logger\n")
