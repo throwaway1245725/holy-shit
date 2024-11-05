@@ -5,6 +5,7 @@ __pycache__
 .venv
 *cookies.txt
 *localstorage.json
+*.user.js
 data
 data_old
 downloaded
