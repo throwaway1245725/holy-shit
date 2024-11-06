@@ -2,6 +2,7 @@ import json
 import os
 import re
 import sys
+from datetime import datetime, timedelta
 from email.message import Message
 from pathlib import Path
 from typing import Any
@@ -115,7 +116,13 @@ def download_archive(url):
         dl_details = details["data"]["0"]
 
         if "id" not in dl_details:
-            log.error(f"could not download {details['title']}")
+            log.error(f"could not download {details['title']}, not available yet")
+            days_to_wait = (
+                datetime.fromtimestamp(details["created_at"] / 1e3)
+                + timedelta(days=29)
+                - datetime.today()
+            ).days
+            log.error(f"try again in {days_to_wait} days")
             return
         dl_pre_url = f"{K_API_URL}/books/data/{m.group(1)}/{m.group(2)}/{dl_details['id']}/{dl_details['public_key']}"
         pre_url_r = requests.post(
