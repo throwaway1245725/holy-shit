@@ -217,16 +217,19 @@ def search_i(artist: str, title: str) -> str | None:
 def search_entry(artist: str, download_title: str, index_title: str) -> str | None:
     search_fns = [suggest_f, search_f, suggest_i, search_i]
     for search_fn in search_fns:
-        if url := search_fn(artist, download_title):
-            return url
-        if index_title != download_title:
-            if url := search_fn(artist, index_title):
+        try:
+            if url := search_fn(artist, download_title):
                 return url
-        if url := search_fn(artist, do_slugify(download_title)):
-            return url
-        if do_slugify(index_title) != do_slugify(download_title):
-            if url := search_fn(artist, do_slugify(index_title)):
+            if index_title != download_title:
+                if url := search_fn(artist, index_title):
+                    return url
+            if url := search_fn(artist, do_slugify(download_title)):
                 return url
+            if do_slugify(index_title) != do_slugify(download_title):
+                if url := search_fn(artist, do_slugify(index_title)):
+                    return url
+        except Exception as e:
+            log.error(f"couldn't search with {search_fn}: {e}")
     return None
 
 
