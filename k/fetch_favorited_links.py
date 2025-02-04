@@ -28,21 +28,27 @@ localstorage_json = parent_dir / "k_localstorage.json"
 with localstorage_json.open("r") as f:
     localstorage_dict: dict[str, Any] = json.load(f)
 
+
 def get_url(url: str, params=None) -> requests.Response:
-    return requests.get(url, params=params, headers={
-        "Authorization": f"Bearer {localstorage_dict["token"]["session"]}",
-        "Origin": K_BASE_URL,
-        "Referer": f"{K_BASE_URL}/",
-    })
+    default_params = {"crt": localstorage_dict["clearance"]}
+    return requests.get(
+        url,
+        params=default_params if not params else params | default_params,
+        headers={
+            "Authorization": f"Bearer {localstorage_dict["token"]["session"]}",
+            "Origin": K_BASE_URL,
+            "Referer": f"{K_BASE_URL}/",
+        },
+    )
 
 
 def parse_favorite_page(page_num: int) -> bool:
-    page = get_url(f"{K_API_URL}/favorites", params={"page": page_num})
+    page = get_url(f"{K_API_URL}/books/favorites", params={"page": page_num})
     with favorited_json.open("r+", encoding="utf-8") as f:
         favorited_data: dict[str, str] = json.load(f)
         reached_already_processed = False
         for entry in page.json()["entries"]:
-            link: str = f"{K_BASE_URL}/g/{entry['id']}/{entry['public_key']}"
+            link: str = f"{K_BASE_URL}/g/{entry['id']}/{entry['key']}"
             title: str = entry["title"]
             if link not in favorited_data.keys():
                 favorited_data[link] = f"!<not yet downloaded> {title}"
@@ -51,16 +57,23 @@ def parse_favorite_page(page_num: int) -> bool:
                 break
 
         if PRETTY_JSON:
-            favorited_data = dict(sorted(favorited_data.items(), key=lambda item: item[1]))
+            favorited_data = dict(
+                sorted(favorited_data.items(), key=lambda item: item[1])
+            )
         f.seek(0)
-        json.dump(obj=favorited_data, fp=f, indent=2 if PRETTY_JSON else None, ensure_ascii=False)
+        json.dump(
+            obj=favorited_data,
+            fp=f,
+            indent=2 if PRETTY_JSON else None,
+            ensure_ascii=False,
+        )
         f.write("\n")
         f.truncate()
         return reached_already_processed
 
 
 def get_favorites():
-    page = get_url(f"{K_API_URL}/favorites")
+    page = get_url(f"{K_API_URL}/books/favorites")
     page_data = page.json()
     num_pages: int = math.ceil(page_data["total"] / page_data["limit"])
     for page_num in range(1, num_pages):

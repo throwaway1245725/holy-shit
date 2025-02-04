@@ -112,22 +112,21 @@ def download_archive(url):
     if m := K_ID_PATTERN.match(url):
         details_url = f"{K_API_URL}/books/detail/{m.group(1)}/{m.group(2)}"
         details_r = requests.get(details_url, headers=HEADERS)
-        details = details_r.json()
-        dl_details = details["data"]["0"]
+        dl_details = details_r.json()
 
         if "id" not in dl_details:
-            log.error(f"could not download {details['title']}, not available yet")
+            log.error(f"could not download {dl_details['title']}, not available yet")
             days_to_wait = (
-                datetime.fromtimestamp(details["created_at"] / 1e3)
+                datetime.fromtimestamp(dl_details["created_at"] / 1e3)
                 + timedelta(days=29)
                 - datetime.today()
             ).days
             log.error(f"try again in {days_to_wait} days")
             return
-        dl_pre_url = f"{K_API_URL}/books/data/{m.group(1)}/{m.group(2)}/{dl_details['id']}/{dl_details['public_key']}"
+        dl_pre_url = f"{K_API_URL}/books/data/{m.group(1)}/{m.group(2)}/{dl_details['id']}/{dl_details['key']}/0"
         pre_url_r = requests.post(
             dl_pre_url,
-            params={"action": "dl", "v": details["updated_at"], "w": 0},
+            params={"action": "dl"},
             data={"token": ACCESS_TOKEN},
             headers=HEADERS,
         )
@@ -135,7 +134,7 @@ def download_archive(url):
 
         with requests.get(
             dl_url,
-            params={"v": details["updated_at"], "w": 0},
+            params={"w": 0},
             headers=HEADERS,
             stream=True,
         ) as r:
