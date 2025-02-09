@@ -322,10 +322,7 @@ def fetch_metadata_f(url: str, entry_path: Path) -> dict[str, Any]:
 
     metadata["thumbnail_page"] = get_thumbnail_page(thumbnail_url)
     thumbnail_img = get_url(thumbnail_url)
-    metadata["date_published"] = parsedate_to_datetime(
-        thumbnail_img.headers["last-modified"]
-    ).isoformat()
-    metadata["date_archived"] = (
+    archive_date = (
         datetime.fromtimestamp(
             int(
                 os.path.getmtime(
@@ -340,6 +337,12 @@ def fetch_metadata_f(url: str, entry_path: Path) -> dict[str, Any]:
         .astimezone(pytz.utc)
         .isoformat()
     )
+    metadata["date_published"] = (
+        parsedate_to_datetime(thumbnail_img.headers["last-modified"]).isoformat()
+        if "last-modified" in thumbnail_img.headers
+        else archive_date
+    )
+    metadata["date_archived"] = archive_date
     return metadata
 
 
