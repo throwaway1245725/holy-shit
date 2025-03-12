@@ -53,6 +53,14 @@
       "justMyCode": false
     },
     {
+      "name": "find_url_matches",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/find_url_matches.py",
+      "console": "integratedTerminal",
+      "justMyCode": false
+    },
+    {
       "name": "process_downloaded",
       "type": "debugpy",
       "request": "launch",
