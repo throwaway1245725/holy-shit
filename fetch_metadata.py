@@ -524,15 +524,19 @@ def fetch_all():
                     original_sources_data[url] = source_url
                     write_original_sources()
 
-                if source_url.startswith(F_BASE_URL):
-                    log.info(f"fetching f metadata for {source_url}")
-                    metadata = fetch_metadata_f(source_url, entry_path)
-                elif source_url.startswith(I_BASE_URL):
-                    log.info(f"fetching i metadata for {source_url}")
-                    metadata = fetch_metadata_i(source_url, entry_path)
-                else:
-                    log.info(f"fetching l metadata for {source_url}")
-                    metadata = fetch_metadata_l(source_url, entry_path)
+                metadata = None
+                try:
+                    if source_url.startswith(F_BASE_URL):
+                        log.info(f"fetching f metadata for {source_url}")
+                        metadata = fetch_metadata_f(source_url, entry_path)
+                    elif source_url.startswith(I_BASE_URL):
+                        log.info(f"fetching i metadata for {source_url}")
+                        metadata = fetch_metadata_i(source_url, entry_path)
+                    else:
+                        log.info(f"fetching l metadata for {source_url}")
+                        metadata = fetch_metadata_l(source_url, entry_path)
+                except:
+                    log.error(f"failed to fetch {source_url}")
                 if not metadata:
                     log.error(f"could not find metadata for source: {source_url}")
                     continue
