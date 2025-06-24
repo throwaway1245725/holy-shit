@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urljoin, urlparse
 
+import cloudscraper
 import pytz
 import requests
 from bs4 import BeautifulSoup
@@ -58,6 +59,9 @@ headers_dict = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     "X-Requested-With": "XMLHttpRequest",
 }
+
+scraper = cloudscraper.create_scraper()
+
 db = TinyDB("db.json", indent=2, ensure_ascii=False, sort_keys=True, encoding="utf-8")
 # db = TinyDB("db.json", ensure_ascii=False, encoding="utf-8")
 
@@ -101,7 +105,7 @@ def clean_directory_name(name: str):
 
 
 def get_url(url: str) -> requests.Response:
-    return requests.get(url, cookies=cookies_dict, headers=headers_dict)
+    return scraper.get(url, cookies=cookies_dict, headers=headers_dict)
 
 
 def get_thumbnail_page(url: str) -> int:

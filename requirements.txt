@@ -1,7 +1,9 @@
 black
 bs4
+cloudscraper
 debugpy
 importlib-metadata
+ipleak
 pillow
 python-dotenv
 python-slugify
@@ -9,7 +11,7 @@ pytz
 pyyaml
 requests
 selenium-interceptor
+setuptools
 tinydb
 tqdm
 undetected_chromedriver
-setuptools

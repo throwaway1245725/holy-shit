@@ -168,7 +168,7 @@ def clean_filenames():
 
     PATTERNS = {
         "standard": re.compile(
-            r"(?<![^\s])\b(?P<page1>\d+)(?:-(?P<page2>\d+))?(?P<suffix>[a-c])?\b(?![^\s])"
+            r"(?<![^\s])\b(?P<page1>\d+)(?:-(?P<page2>\d+))?(?P<suffix>[a-c])?\b(?![^\s])(?! - p)"
         ),
         "fakku": re.compile(
             r"p(?P<page1>\d+)(?:(?:x(?P<suffix>\d))|(?:-p(?P<page2>\d+)))?"
