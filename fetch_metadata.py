@@ -318,9 +318,7 @@ def fetch_metadata_f(url: str, entry_path: Path) -> dict[str, Any]:
     if chapters:
         raise Exception("woah, found one!")
 
-    thumbnail_url = soup.select(
-        "div[class^='block sm:inline-block relative w-full align-top'] img"
-    )[0]["src"]
+    thumbnail_url = soup.select("div[class^='block sm:inline-block'] img")[0]["src"]
     if isinstance(thumbnail_url, list):
         thumbnail_url = thumbnail_url[0]
 
